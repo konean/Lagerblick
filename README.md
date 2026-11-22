@@ -24,12 +24,14 @@ Halte hier Entscheidungen fest, die später erklärt werden müssen, etwa die Wa
 - 2026-11-22 — Übersicht ohne eigene Datenbank-View: „knapp“ (unter Mindestbestand oder überreserviert) wird in `knappeMaterialien` berechnet und von Übersicht und Materialfilter gemeinsam genutzt, gemeinsame Abfragen pro Aufruf mit `cache()` dedupliziert. Grund: eine Regel an einer Stelle, testbar ohne Datenbank. Verworfen: View für knappe Artikel, weil sie die Regel in SQL doppeln würde und bei der aktuellen Datenmenge keinen Vorteil bringt.
 - 2026-11-22 — Wischnavigation mit Touch Events am Dokument, ohne Bibliothek: Richtung nach 10 px festgelegt, nur waagerechte Gesten werden übernommen, scrollbare Tabellen haben Vorrang bis zum Rand. Grund: Die Geste geht überall, Scrollen schaltet nie versehentlich um. Verworfen: Pointer Events, weil der Browser sie beim Scrollen abbricht, und eine Gesten-Bibliothek, weil sie für eine einzige Geste unnötig ist.
 - 2026-11-22 — Zwei Supabase-Projekte (`lagerblick-dev` für lokal und Vercel Preview, `lagerblick-prod` nur für Production), prod-Schlüssel nur in den Vercel-Variablen der Umgebung „Production“, Migrationen auf prod von Hand per `db push --remote` vor dem Merge. Grund: Previews können nicht in Produktivdaten schreiben, Schemaänderungen erreichen prod nur bewusst. Verworfen: ein gemeinsames Projekt, weil jede Preview dann echte Daten verändern könnte; automatische Migrationen beim Deployment, weil ein Fehler sofort die Produktion träfe.
+- 2026-11-22 — Bedienhilfe als statische Seite `/hilfe` in der App, erreichbar über die Kopfzeile, nicht als Hauptbereich. Grund: Hilfe ist dort, wo gearbeitet wird, die untere Leiste bleibt bei fünf Einträgen und das Wischen unberührt. Verworfen: Markdown-Datei im Repo, weil Mitarbeitende sie nicht sehen, und ein Markdown-Renderer, weil er eine zusätzliche Abhängigkeit für eine einzige Seite wäre.
 
 ## Kundenauslieferung
 
 - [x] Der vereinbarte Ablauf funktioniert in der vorgesehenen Umgebung. Offene Punkte sind für die Abnahme dokumentiert.
   - 2026-11-22 Abnahme auf <https://lagerblick-iota.vercel.app> (`lagerblick-prod`) nach `docs/betrieb.md`: Anmeldung beider Rollen, Wareneingang mit Bestand, Mitarbeiter ohne Korrektur und Storno, Storno und Archivieren, Registrierung abgewiesen, dev-Konto abgewiesen. Preview-Deployment läuft gegen `lagerblick-dev`.
-  - Offen: Bedienhilfe in der App. Free-Tarif ohne Backups und mit Pausieren bei Inaktivität (siehe `docs/betrieb.md`, „Laufender Betrieb“).
+  - Bedienhilfe in der App unter `/hilfe` (Link „Hilfe“ in der Kopfzeile).
+  - Offen: Free-Tarif ohne Backups und mit Pausieren bei Inaktivität (siehe `docs/betrieb.md`, „Laufender Betrieb“).
 - [ ] Zuständigkeiten für Betrieb, Updates und Support sind geklärt. Bei riskanten Änderungen an bestehenden Daten wurde die Wiederherstellung in einer Testumgebung geprüft.
 - [x] Nach dem Deployment ist der ausgelieferte Stand festgehalten und der wichtigste Ablauf wurde geprüft.
   - Erste Auslieferung 2026-11-22: Stand `main` nach Merge von PR #9. Der ausgelieferte Commit steht in Vercel beim Deployment mit der Markierung „Current“.

@@ -26,7 +26,7 @@ export function Seitenkopf({
   titel,
   children,
 }: {
-  nummer: string;
+  nummer?: string;
   bereich: string;
   titel: React.ReactNode;
   children?: React.ReactNode;
@@ -35,7 +35,7 @@ export function Seitenkopf({
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="font-mono text-xs tracking-wider text-grau uppercase">
-          {nummer} · {bereich}
+          {nummer ? `${nummer} · ${bereich}` : bereich}
         </p>
         <h1 className="mt-1 text-2xl font-semibold">{titel}</h1>
       </div>

@@ -22,7 +22,7 @@ export default function LoginSeite() {
         </section>
 
         <p className="mt-6 text-xs text-grau">
-          Noch kein Zugang? Die Administration legt Benutzerkonten an.
+          Noch kein Zugang oder Passwort vergessen? Bitte an die Administration wenden.
         </p>
       </div>
     </main>
