@@ -3,7 +3,8 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getBenutzer } from "@/lib/auth";
-import { eingangSchema } from "@/lib/bewegungen/schema";
+import type { PostgrestError } from "@supabase/supabase-js";
+import { buchungSchema, formularArtSchema, stornoSchema, type FormularArt } from "@/lib/bewegungen/schema";
 import { dbFehlermeldung } from "@/lib/db-fehler";
 import { formatMenge } from "@/lib/format";
 import { feldfehler, kategorieSchema, materialSchema, type Einheit } from "@/lib/materialien/schema";
@@ -103,41 +104,86 @@ export async function materialLoeschen(id: string): Promise<FormZustand> {
   redirect("/materialien");
 }
 
-// Wareneingang ----------------------------------------------------------------
-// Beide Rollen dürfen buchen. Die Einheit dient nur der verständlichen Vorprüfung;
-// verbindlich prüft buche_eingang in der Datenbank anhand des gespeicherten Materials.
+// Buchungen -------------------------------------------------------------------
+// Eingang und Entnahme dürfen beide Rollen buchen, Korrektur und Storno nur Admins.
+// Die Einheit dient nur der verständlichen Vorprüfung; verbindlich prüfen die
+// Datenbankfunktionen anhand des gespeicherten Materials und der Rolle.
 
-export async function eingangBuchen(
+// Eigene Meldungen der Buchungsfunktionen (Bestand reicht nicht, archiviert,
+// ungültige Menge, fehlende Berechtigung) sind verständlich und werden direkt angezeigt.
+function buchungsfehler(error: PostgrestError) {
+  if (["P0001", "23514", "42501"].includes(error.code)) return error.message;
+  if (error.code === "P0002") return "Das Material oder die Buchung wurde nicht gefunden.";
+  return dbFehlermeldung(error);
+}
+
+const ERFOLG: Record<FormularArt, (menge: string) => string> = {
+  eingang: (menge) => `Eingang über ${menge} gebucht.`,
+  entnahme: (menge) => `Entnahme über ${menge} gebucht.`,
+  korrektur: (menge) => `Bestand auf ${menge} korrigiert.`,
+};
+
+export async function buchen(
   materialId: string,
   einheit: Einheit,
   _vorher: FormZustand,
   formData: FormData,
 ): Promise<FormZustand> {
   const werte = formularwerte(formData);
+  const art = formularArtSchema.safeParse(werte.art);
+  if (!art.success) return { fehler: "Unbekannte Buchungsart.", werte };
+  if (art.data === "korrektur" && !(await istAdmin())) {
+    return { fehler: "Nur Admins dürfen Bestände korrigieren.", werte };
+  }
   await getBenutzer();
 
-  const geprueft = eingangSchema(einheit).safeParse(werte);
+  const geprueft = buchungSchema(art.data, einheit).safeParse(werte);
   if (!geprueft.success) {
     return { fehler: "Bitte die markierten Felder prüfen.", feldfehler: feldfehler(geprueft.error), werte };
   }
+  const { menge, kommentar } = geprueft.data;
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("buche_eingang", {
-    p_material_id: materialId,
-    p_menge: geprueft.data.menge,
-    p_kommentar: geprueft.data.kommentar ?? undefined,
-  });
-
-  if (error) {
-    // Eigene Meldungen aus buche_eingang (archiviert, ungültige Menge) direkt anzeigen.
-    if (error.code === "P0001" || error.code === "23514") return { fehler: error.message, werte };
-    if (error.code === "P0002") return { fehler: "Das Material wurde nicht gefunden.", werte };
-    return { fehler: dbFehlermeldung(error), werte };
-  }
+  const { error } =
+    art.data === "korrektur"
+      ? await supabase.rpc("buche_korrektur", {
+          p_material_id: materialId,
+          p_gezaehlter_bestand: menge,
+          // Bei der Korrektur ist der Grund laut Schema Pflicht; TypeScript sieht nur den gemeinsamen Typ.
+          p_kommentar: kommentar ?? "",
+        })
+      : await supabase.rpc(art.data === "eingang" ? "buche_eingang" : "buche_entnahme", {
+          p_material_id: materialId,
+          p_menge: menge,
+          p_kommentar: kommentar ?? undefined,
+        });
+  if (error) return { fehler: buchungsfehler(error), werte };
 
   // Seite mit neuem Bestand und neuer Bewegung neu rendern.
   refresh();
-  return { erfolg: `Eingang über ${formatMenge(geprueft.data.menge, einheit)} gebucht.` };
+  return { erfolg: ERFOLG[art.data](formatMenge(menge, einheit)) };
+}
+
+export async function stornieren(
+  bewegungId: string,
+  _vorher: FormZustand,
+  formData: FormData,
+): Promise<FormZustand> {
+  const werte = formularwerte(formData);
+  if (!(await istAdmin())) return { fehler: "Nur Admins dürfen Buchungen stornieren.", werte };
+
+  const geprueft = stornoSchema.safeParse(werte);
+  if (!geprueft.success) return { feldfehler: feldfehler(geprueft.error), werte };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("buche_storno", {
+    p_bewegung_id: bewegungId,
+    p_kommentar: geprueft.data.kommentar,
+  });
+  if (error) return { fehler: buchungsfehler(error), werte };
+
+  refresh();
+  return { erfolg: "Buchung storniert." };
 }
 
 // Kategorien ------------------------------------------------------------------

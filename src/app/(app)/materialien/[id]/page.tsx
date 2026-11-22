@@ -8,9 +8,18 @@ import { formatMenge, formatMengeMitVorzeichen, formatZeitpunkt } from "@/lib/fo
 import { ladeMaterial } from "@/lib/materialien/daten";
 import { EINHEITEN } from "@/lib/materialien/schema";
 import { AktionsKnopf } from "@/components/aktions-knopf";
-import { BestandsHinweis, knopfGefahr, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
-import { eingangBuchen, materialLoeschen, materialStatusSetzen } from "../actions";
-import { EingangFormular } from "./eingang-formular";
+import { StornoKnopf } from "@/components/storno-knopf";
+import {
+  BestandsHinweis,
+  knopfGefahr,
+  knopfPrimaer,
+  knopfSekundaer,
+  Seitenkopf,
+  StatusLabel,
+  StorniertLabel,
+} from "@/components/ui";
+import { buchen, materialLoeschen, materialStatusSetzen, stornieren } from "../actions";
+import { BuchungsFormular } from "./buchungs-formular";
 
 export const metadata: Metadata = { title: "Material · Lagerblick" };
 
@@ -79,7 +88,12 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
               {istAdmin && " Zum Buchen zuerst reaktivieren."}
             </p>
           ) : (
-            <EingangFormular aktion={eingangBuchen.bind(null, material.id, material.einheit)} einheit={material.einheit} />
+            <BuchungsFormular
+              aktion={buchen.bind(null, material.id, material.einheit)}
+              einheit={material.einheit}
+              bestand={bestand}
+              mitKorrektur={istAdmin}
+            />
           )}
         </div>
       </section>
@@ -105,17 +119,31 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
           <ul className="divide-y divide-linie">
             {bewegungen.map((b) => (
               <li key={b.id} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 px-4 py-3 text-sm">
-                <span className="font-medium">{BEWEGUNGSARTEN[b.art]}</span>
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <span className={`font-medium ${b.storniert ? "text-grau" : ""}`}>{BEWEGUNGSARTEN[b.art]}</span>
+                  {b.storniert && <StorniertLabel />}
+                </span>
                 <span
-                  className={`text-right font-mono tabular-nums ${b.menge > 0 ? "text-ok" : "text-tinte"}`}
+                  className={`text-right font-mono tabular-nums ${
+                    b.storniert ? "text-grau line-through" : b.menge > 0 ? "text-ok" : "text-tinte"
+                  }`}
                 >
                   {formatMengeMitVorzeichen(b.menge, material.einheit)}
                 </span>
-                <span className="text-xs text-grau">
+                <span className="col-span-2 text-xs text-grau">
                   {formatZeitpunkt(b.erstellt_am)} · {b.ersteller?.anzeigename ?? "Unbekannt"}
+                  {b.original && ` · zu ${BEWEGUNGSARTEN[b.original.art]} vom ${formatZeitpunkt(b.original.erstellt_am)}`}
                 </span>
                 {b.kommentar && (
                   <span className="col-span-2 mt-1 text-xs text-tinte/80">{b.kommentar}</span>
+                )}
+                {istAdmin && !archiviert && b.art !== "storno" && !b.storniert && (
+                  <span className="col-span-2 mt-1">
+                    <StornoKnopf
+                      aktion={stornieren.bind(null, b.id)}
+                      beschreibung={`${BEWEGUNGSARTEN[b.art]} ${formatMengeMitVorzeichen(b.menge, material.einheit)}`}
+                    />
+                  </span>
                 )}
               </li>
             ))}
