@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
+import { ladeBestaende, unterMindestbestand } from "@/lib/bewegungen/daten";
 import { formatMenge } from "@/lib/format";
 import { ladeKategorien, ladeMaterialien, type MaterialFilter } from "@/lib/materialien/daten";
-import { eingabeKlasse, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
+import { BestandsHinweis, eingabeKlasse, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Materialien · Lagerblick" };
 
@@ -51,7 +52,11 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
     status: statusWert === "archiviert" || statusWert === "alle" ? statusWert : "aktiv",
   };
 
-  const [kategorien, materialien] = await Promise.all([ladeKategorien(), ladeMaterialien(filter)]);
+  const [kategorien, materialien, bestaende] = await Promise.all([
+    ladeKategorien(),
+    ladeMaterialien(filter),
+    ladeBestaende(),
+  ]);
 
   return (
     <>
@@ -102,32 +107,47 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
             <tr>
               <th className="px-4 py-3 font-normal">Artikel</th>
               <th className="hidden px-4 py-3 font-normal md:table-cell">Kategorie</th>
-              <th className="hidden px-4 py-3 font-normal sm:table-cell">Artikelnr.</th>
-              <th className="px-4 py-3 text-right font-normal">Mindestbestand</th>
+              <th className="hidden px-4 py-3 font-normal lg:table-cell">Artikelnr.</th>
+              <th className="px-4 py-3 text-right font-normal">Bestand</th>
+              <th className="hidden px-4 py-3 text-right font-normal sm:table-cell">Mindestbestand</th>
               <th className="hidden px-4 py-3 font-normal sm:table-cell">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-linie">
-            {materialien.map((m) => (
-              <tr key={m.id} className="hover:bg-papier">
-                <td className="px-4 py-3">
-                  <Link href={`/materialien/${m.id}`} className="font-medium hover:underline">
-                    {m.name}
-                  </Link>
-                  <span className="block text-xs text-grau">
-                    {m.hersteller} · {m.modell}
-                  </span>
-                </td>
-                <td className="hidden px-4 py-3 md:table-cell">{m.kategorie?.name}</td>
-                <td className="hidden px-4 py-3 font-mono text-xs sm:table-cell">{m.sku ?? "–"}</td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">
-                  {formatMenge(m.mindestbestand, m.einheit)}
-                </td>
-                <td className="hidden px-4 py-3 sm:table-cell">
-                  <StatusLabel status={m.status} />
-                </td>
-              </tr>
-            ))}
+            {materialien.map((m) => {
+              const bestand = bestaende.get(m.id) ?? 0;
+              const knapp = unterMindestbestand(bestand, m.mindestbestand);
+              return (
+                <tr key={m.id} className="hover:bg-papier">
+                  <td className="px-4 py-3">
+                    <Link href={`/materialien/${m.id}`} className="font-medium hover:underline">
+                      {m.name}
+                    </Link>
+                    <span className="block text-xs text-grau">
+                      {m.hersteller} · {m.modell}
+                    </span>
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">{m.kategorie?.name}</td>
+                  <td className="hidden px-4 py-3 font-mono text-xs lg:table-cell">{m.sku ?? "–"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={`font-mono tabular-nums ${knapp ? "font-medium text-warnung" : ""}`}>
+                      {formatMenge(bestand, m.einheit)}
+                    </span>
+                    {knapp && (
+                      <span className="mt-1 block">
+                        <BestandsHinweis kurz />
+                      </span>
+                    )}
+                  </td>
+                  <td className="hidden px-4 py-3 text-right font-mono text-grau tabular-nums sm:table-cell">
+                    {formatMenge(m.mindestbestand, m.einheit)}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    <StatusLabel status={m.status} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {materialien.length === 0 && (
