@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
-// Hauptbereiche der App. Weitere Punkte (Bewegungen, Reservierungen, Projekte)
+// Hauptbereiche der App. Weitere Punkte (Reservierungen, Projekte)
 // folgen mit ihren Phasen; die mobile Leiste ist für bis zu fünf Einträge ausgelegt.
 const EINTRAEGE = [
   { href: "/", label: "Übersicht", kurz: "Übersicht", symbol: <SymbolUebersicht /> },
   { href: "/materialien", label: "Materialien", kurz: "Material", symbol: <SymbolMaterial /> },
+  { href: "/bewegungen", label: "Bewegungen", kurz: "Bewegungen", symbol: <SymbolBewegungen /> },
 ];
 
 function istAktiv(href: string, pfad: string | null) {
@@ -125,6 +126,15 @@ function SymbolMaterial() {
     <Symbol>
       <path d="M10 2.5 17 6v8l-7 3.5L3 14V6l7-3.5Z" />
       <path d="M3 6l7 3.5L17 6M10 9.5v8" />
+    </Symbol>
+  );
+}
+
+function SymbolBewegungen() {
+  return (
+    <Symbol>
+      <path d="M3 7h12M12 4l3 3-3 3" strokeLinecap="round" />
+      <path d="M17 13H5M8 10l-3 3 3 3" strokeLinecap="round" />
     </Symbol>
   );
 }

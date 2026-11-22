@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { EINTRAEGE_PRO_SEITE, zeitraumGrenzen, type HistorieFilter } from "./filter";
 
 // Bestand aller Materialien als Zuordnung material_id → Bestand.
 // Die View ist klein (eine Zeile pro Material) und wird für die Liste komplett geladen.
@@ -30,6 +31,33 @@ export async function ladeLetzteBewegungen(materialId: string, anzahl = 10) {
     .limit(anzahl);
   if (error) throw error;
   return mitStornoInfo(data);
+}
+
+// Buchungshistorie mit Filtern, neueste zuerst. Lädt einen Eintrag mehr als angezeigt,
+// um zu wissen, ob es eine weitere Seite gibt.
+export async function ladeBewegungen(filter: HistorieFilter) {
+  const supabase = await createClient();
+  const start = (filter.seite - 1) * EINTRAEGE_PRO_SEITE;
+  let abfrage = supabase
+    .from("bewegungen")
+    // Als ein zusammenhängender Text, damit Supabase den Ergebnistyp ableiten kann.
+    .select("id, art, menge, kommentar, erstellt_am, storno_von, material:materialien(id, name, einheit, status), ersteller:profiles(anzeigename)")
+    .order("erstellt_am", { ascending: false })
+    .order("id")
+    .range(start, start + EINTRAEGE_PRO_SEITE);
+
+  if (filter.material) abfrage = abfrage.eq("material_id", filter.material);
+  if (filter.art) abfrage = abfrage.eq("art", filter.art);
+  const { ab, vor } = zeitraumGrenzen(filter);
+  if (ab) abfrage = abfrage.gte("erstellt_am", ab);
+  if (vor) abfrage = abfrage.lt("erstellt_am", vor);
+
+  const { data, error } = await abfrage;
+  if (error) throw error;
+  return {
+    bewegungen: await mitStornoInfo(data.slice(0, EINTRAEGE_PRO_SEITE)),
+    weitere: data.length > EINTRAEGE_PRO_SEITE,
+  };
 }
 
 // Ergänzt pro Bewegung, ob sie storniert wurde, und bei Stornos die ursprüngliche Bewegung.
