@@ -9,7 +9,7 @@ Interne Webanwendung für Gerloff & Frerk. Lagerblick zeigt Materialbestände ü
 
 ## Starten und prüfen
 
-- **Einrichtung und Start** — Node.js 24 oder neuer. `npm install`, dann `.env.example` nach `.env.local` kopieren und die Werte des Supabase-Entwicklungsprojekts eintragen. Start mit `npm run dev`, die App läuft unter <http://localhost:3000>. Datenbankmigrationen liegen in `supabase/migrations/` und werden mit der Supabase-CLI (`npx supabase db push --remote`) eingespielt. Danach die Typen mit `npm run db:types` neu erzeugen. Für die DB-Tests `.env.test.example` nach `.env.test.local` kopieren und die Zugangsdaten der synthetischen Testbenutzer eintragen. Ohne diese Datei werden die DB-Tests übersprungen.
+- **Einrichtung und Start** — Node.js 24. `npm install`, dann `.env.example` nach `.env.local` kopieren und die Werte des Supabase-Entwicklungsprojekts eintragen. Start mit `npm run dev`, die App läuft unter <http://localhost:3000>. Datenbankmigrationen liegen in `supabase/migrations/` und werden mit der Supabase-CLI (`npx supabase db push --remote`) eingespielt. Danach die Typen mit `npm run db:types` neu erzeugen. Für die DB-Tests `.env.test.example` nach `.env.test.local` kopieren und die Zugangsdaten der synthetischen Testbenutzer eintragen. Ohne diese Datei werden die DB-Tests übersprungen.
 - **Lokale Prüfung** — `npm run check` führt nacheinander Lint (`npm run lint`), Typprüfung (`npm run typecheck`), Tests (`npm run test`) und Produktions-Build (`npm run build`) aus. Alle Schritte müssen fehlerfrei durchlaufen.
 
 ## Entscheidungen
@@ -30,4 +30,4 @@ Halte hier Entscheidungen fest, die später erklärt werden müssen, etwa die Wa
 - [ ] Zuständigkeiten für Betrieb, Updates und Support sind geklärt. Bei riskanten Änderungen an bestehenden Daten wurde die Wiederherstellung in einer Testumgebung geprüft.
 - [ ] Nach dem Deployment ist der ausgelieferte Stand festgehalten und der wichtigste Ablauf wurde geprüft.
 
-Bei Bedarf verlinke hier die Anleitung für Auslieferung und Betrieb.
+Anleitung für Einrichtung, Migrationen, Deployment und Abnahme: [`docs/betrieb.md`](docs/betrieb.md).
