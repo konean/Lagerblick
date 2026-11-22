@@ -77,6 +77,15 @@ export function StatusLabel({ status }: { status: "aktiv" | "archiviert" }) {
   );
 }
 
+// Gedämpftes Label für Bewegungen, die per Storno aufgehoben wurden.
+export function StorniertLabel() {
+  return (
+    <span className="rounded-s bg-papier px-1.5 py-0.5 font-mono text-[11px] tracking-wider text-grau uppercase ring-1 ring-linie">
+      Storniert
+    </span>
+  );
+}
+
 export function BestandsHinweis({ kurz = false }: { kurz?: boolean }) {
   return (
     <span

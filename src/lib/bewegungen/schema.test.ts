@@ -1,32 +1,62 @@
 import { describe, expect, it } from "vitest";
-import { eingangSchema } from "./schema";
+import { buchungSchema, formularArtSchema, stornoSchema } from "./schema";
 
-describe("eingangSchema", () => {
+describe("buchungSchema für Eingang und Entnahme", () => {
   it("wandelt die Menge um und macht einen leeren Kommentar zu null", () => {
-    expect(eingangSchema("meter").parse({ menge: "2,5", kommentar: "  " })).toEqual({
+    expect(buchungSchema("eingang", "meter").parse({ menge: "2,5", kommentar: "  " })).toEqual({
       menge: 2.5,
       kommentar: null,
     });
-    expect(eingangSchema("stueck").parse({ menge: "12", kommentar: " Lieferung " })).toEqual({
+    expect(buchungSchema("entnahme", "stueck").parse({ menge: "12", kommentar: " Baustelle " })).toEqual({
       menge: 12,
-      kommentar: "Lieferung",
+      kommentar: "Baustelle",
     });
   });
 
   it("lehnt 0, negative Mengen und Text ab", () => {
-    for (const menge of ["0", "0,000", "-1", "abc", ""]) {
-      expect(eingangSchema("meter").safeParse({ menge, kommentar: "" }).success).toBe(false);
+    for (const art of ["eingang", "entnahme"] as const) {
+      for (const menge of ["0", "0,000", "-1", "abc", ""]) {
+        expect(buchungSchema(art, "meter").safeParse({ menge, kommentar: "" }).success).toBe(false);
+      }
     }
   });
 
   it("erlaubt Nachkommastellen nur bei Meter und kg", () => {
-    expect(eingangSchema("kg").safeParse({ menge: "0,5", kommentar: "" }).success).toBe(true);
+    expect(buchungSchema("entnahme", "kg").safeParse({ menge: "0,5", kommentar: "" }).success).toBe(true);
     for (const einheit of ["stueck", "rolle", "packung"] as const) {
-      expect(eingangSchema(einheit).safeParse({ menge: "1,5", kommentar: "" }).success).toBe(false);
+      expect(buchungSchema("entnahme", einheit).safeParse({ menge: "1,5", kommentar: "" }).success).toBe(false);
     }
   });
 
   it("begrenzt den Kommentar auf 500 Zeichen", () => {
-    expect(eingangSchema("stueck").safeParse({ menge: "1", kommentar: "x".repeat(501) }).success).toBe(false);
+    expect(buchungSchema("eingang", "stueck").safeParse({ menge: "1", kommentar: "x".repeat(501) }).success).toBe(false);
+  });
+});
+
+describe("buchungSchema für die Korrektur", () => {
+  it("erlaubt den gezählten Bestand 0 und verlangt einen Grund", () => {
+    expect(buchungSchema("korrektur", "stueck").parse({ menge: "0", kommentar: " Inventur " })).toEqual({
+      menge: 0,
+      kommentar: "Inventur",
+    });
+    expect(buchungSchema("korrektur", "stueck").safeParse({ menge: "3", kommentar: "  " }).success).toBe(false);
+  });
+
+  it("lehnt negative und bei Stückgut gebrochene Bestände ab", () => {
+    expect(buchungSchema("korrektur", "stueck").safeParse({ menge: "-1", kommentar: "x" }).success).toBe(false);
+    expect(buchungSchema("korrektur", "stueck").safeParse({ menge: "1,5", kommentar: "x" }).success).toBe(false);
+    expect(buchungSchema("korrektur", "meter").safeParse({ menge: "1,5", kommentar: "x" }).success).toBe(true);
+  });
+});
+
+describe("formularArtSchema und stornoSchema", () => {
+  it("lässt nur Eingang, Entnahme und Korrektur zu", () => {
+    expect(formularArtSchema.safeParse("entnahme").success).toBe(true);
+    expect(formularArtSchema.safeParse("storno").success).toBe(false);
+  });
+
+  it("verlangt beim Storno einen Grund", () => {
+    expect(stornoSchema.safeParse({ kommentar: " " }).success).toBe(false);
+    expect(stornoSchema.parse({ kommentar: " Falsch erfasst " })).toEqual({ kommentar: "Falsch erfasst" });
   });
 });
