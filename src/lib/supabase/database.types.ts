@@ -48,6 +48,7 @@ export type Database = {
           kommentar: string | null
           material_id: string
           menge: number
+          storno_von: string | null
         }
         Insert: {
           art: Database["public"]["Enums"]["bewegungsart"]
@@ -57,6 +58,7 @@ export type Database = {
           kommentar?: string | null
           material_id: string
           menge: number
+          storno_von?: string | null
         }
         Update: {
           art?: Database["public"]["Enums"]["bewegungsart"]
@@ -66,6 +68,7 @@ export type Database = {
           kommentar?: string | null
           material_id?: string
           menge?: number
+          storno_von?: string | null
         }
         Relationships: [
           {
@@ -87,6 +90,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materialien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bewegungen_storno_von_fkey"
+            columns: ["storno_von"]
+            isOneToOne: false
+            referencedRelation: "bewegungen"
             referencedColumns: ["id"]
           },
         ]
@@ -198,7 +208,30 @@ export type Database = {
         Args: { p_kommentar?: string; p_material_id: string; p_menge: number }
         Returns: string
       }
+      buche_entnahme: {
+        Args: { p_kommentar?: string; p_material_id: string; p_menge: number }
+        Returns: string
+      }
+      buche_korrektur: {
+        Args: {
+          p_gezaehlter_bestand: number
+          p_kommentar: string
+          p_material_id: string
+        }
+        Returns: string
+      }
+      buche_storno: {
+        Args: { p_bewegung_id: string; p_kommentar: string }
+        Returns: string
+      }
       ist_admin: { Args: never; Returns: boolean }
+      pruefe_menge: {
+        Args: {
+          p_einheit: Database["public"]["Enums"]["einheit"]
+          p_menge: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       bewegungsart: "eingang" | "entnahme" | "korrektur" | "storno"
