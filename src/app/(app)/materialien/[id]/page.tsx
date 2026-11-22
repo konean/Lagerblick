@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
-import { formatMenge } from "@/lib/format";
+import { ladeBestand, ladeLetzteBewegungen, unterMindestbestand } from "@/lib/bewegungen/daten";
+import { BEWEGUNGSARTEN } from "@/lib/bewegungen/schema";
+import { formatMenge, formatMengeMitVorzeichen, formatZeitpunkt } from "@/lib/format";
 import { ladeMaterial } from "@/lib/materialien/daten";
 import { EINHEITEN } from "@/lib/materialien/schema";
 import { AktionsKnopf } from "@/components/aktions-knopf";
-import { knopfGefahr, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
-import { materialLoeschen, materialStatusSetzen } from "../actions";
+import { BestandsHinweis, knopfGefahr, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
+import { eingangBuchen, materialLoeschen, materialStatusSetzen } from "../actions";
+import { EingangFormular } from "./eingang-formular";
 
 export const metadata: Metadata = { title: "Material · Lagerblick" };
 
@@ -26,7 +29,12 @@ export default function MaterialSeite(props: PageProps<"/materialien/[id]">) {
 
 async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["params"] }) {
   const { id } = await params;
-  const [material, benutzer] = await Promise.all([ladeMaterial(id), getBenutzer()]);
+  const [material, benutzer, bestand, bewegungen] = await Promise.all([
+    ladeMaterial(id),
+    getBenutzer(),
+    ladeBestand(id),
+    ladeLetzteBewegungen(id),
+  ]);
   const istAdmin = benutzer.rolle === "admin";
   const archiviert = material.status === "archiviert";
 
@@ -48,6 +56,34 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
         )}
       </Seitenkopf>
 
+      <section className="grid rounded-m border border-linie bg-flaeche sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="border-b border-linie p-5 sm:border-r sm:border-b-0">
+          <p className="font-mono text-[11px] tracking-wider text-grau uppercase">Bestand</p>
+          <p className="mt-2 font-mono text-3xl font-medium tabular-nums">
+            {formatMenge(bestand)}
+            <span className="ml-2 text-base font-normal text-grau">{EINHEITEN[material.einheit]}</span>
+          </p>
+          <p className="mt-2 font-mono text-xs text-grau tabular-nums">
+            Mindestbestand {formatMenge(material.mindestbestand, material.einheit)}
+          </p>
+          {unterMindestbestand(bestand, material.mindestbestand) && (
+            <p className="mt-3">
+              <BestandsHinweis />
+            </p>
+          )}
+        </div>
+        <div className="p-5">
+          {archiviert ? (
+            <p className="text-sm text-grau">
+              Archiviertes Material kann nicht gebucht werden.
+              {istAdmin && " Zum Buchen zuerst reaktivieren."}
+            </p>
+          ) : (
+            <EingangFormular aktion={eingangBuchen.bind(null, material.id, material.einheit)} einheit={material.einheit} />
+          )}
+        </div>
+      </section>
+
       <dl className="grid rounded-m border border-linie bg-flaeche sm:grid-cols-2">
         <Angabe label="Kategorie" wert={material.kategorie?.name} />
         <Angabe label="Artikelnummer / SKU" wert={material.sku} mono />
@@ -61,7 +97,31 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
         </div>
       </dl>
 
-      <p className="text-sm text-grau">Bestand und Buchungen folgen in der nächsten Ausbaustufe.</p>
+      <section className="rounded-m border border-linie bg-flaeche">
+        <h2 className="border-b border-linie px-4 py-3 text-sm font-semibold">Letzte Bewegungen</h2>
+        {bewegungen.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-grau">Noch keine Bewegungen.</p>
+        ) : (
+          <ul className="divide-y divide-linie">
+            {bewegungen.map((b) => (
+              <li key={b.id} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 px-4 py-3 text-sm">
+                <span className="font-medium">{BEWEGUNGSARTEN[b.art]}</span>
+                <span
+                  className={`text-right font-mono tabular-nums ${b.menge > 0 ? "text-ok" : "text-tinte"}`}
+                >
+                  {formatMengeMitVorzeichen(b.menge, material.einheit)}
+                </span>
+                <span className="text-xs text-grau">
+                  {formatZeitpunkt(b.erstellt_am)} · {b.ersteller?.anzeigename ?? "Unbekannt"}
+                </span>
+                {b.kommentar && (
+                  <span className="col-span-2 mt-1 text-xs text-tinte/80">{b.kommentar}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {istAdmin && (
         <section className="space-y-3 rounded-m border border-linie bg-flaeche p-4">

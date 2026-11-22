@@ -76,3 +76,13 @@ export function StatusLabel({ status }: { status: "aktiv" | "archiviert" }) {
     </span>
   );
 }
+
+export function BestandsHinweis({ kurz = false }: { kurz?: boolean }) {
+  return (
+    <span
+      title={kurz ? "Bestand unter Mindestbestand" : undefined}
+      className="rounded-s bg-warnung-hell px-1.5 py-0.5 font-mono text-[11px] tracking-wider whitespace-nowrap text-warnung uppercase">
+      {kurz ? "Unter Min." : "Unter Mindestbestand"}
+    </span>
+  );
+}

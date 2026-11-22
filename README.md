@@ -18,6 +18,7 @@ Halte hier Entscheidungen fest, die später erklärt werden müssen, etwa die Wa
 
 - 2026-11-22 — Next.js (App Router, TypeScript, Tailwind) mit Supabase (PostgreSQL, Auth, RLS), Hosting auf Vercel. Grund: ein Projekt ohne separates Backend, Berechtigungen direkt in der Datenbank. Verworfen: eigenes API-Backend, weil es für den Umfang unnötige Komplexität bringt.
 - 2026-11-22 — `agentRules: false` in `next.config.ts`. Grund: `next dev` würde sonst einen eigenen Block in `AGENTS.md` schreiben. Verworfen: Block übernehmen, weil `AGENTS.md` die verbindlichen Projektregeln enthält.
+- 2026-11-22 — Bestand als Summe vorzeichenbehafteter, unveränderlicher Bewegungen (View `material_bestand`), Buchen nur über Datenbankfunktionen mit Zeilensperre. Grund: Historie und Bestand können nicht auseinanderlaufen, parallele Buchungen bleiben konsistent. Verworfen: gespeicherte Bestandsspalte, weil sie doppelt gepflegt werden müsste.
 
 ## Kundenauslieferung
 

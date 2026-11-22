@@ -1,13 +1,17 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getBenutzer } from "@/lib/auth";
+import { eingangSchema } from "@/lib/bewegungen/schema";
 import { dbFehlermeldung } from "@/lib/db-fehler";
-import { feldfehler, kategorieSchema, materialSchema } from "@/lib/materialien/schema";
+import { formatMenge } from "@/lib/format";
+import { feldfehler, kategorieSchema, materialSchema, type Einheit } from "@/lib/materialien/schema";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormZustand = {
   fehler?: string;
+  erfolg?: string;
   feldfehler?: Record<string, string>;
   werte?: Record<string, string>;
 };
@@ -53,6 +57,10 @@ export async function materialSpeichern(
     if (error.code === "23505") {
       return { feldfehler: { sku: "Diese Artikelnummer ist bereits vergeben." }, werte };
     }
+    // Trigger materialien_einheit_sperren: Einheit nach der ersten Buchung fest.
+    if (error.code === "23514" && error.message.includes("Einheit")) {
+      return { feldfehler: { einheit: "Nach der ersten Buchung lässt sich die Einheit nicht mehr ändern." }, werte };
+    }
     return { fehler: dbFehlermeldung(error), werte };
   }
   // Ohne Berechtigung liefert ein Update durch RLS keine Zeile zurück statt eines Fehlers.
@@ -93,6 +101,43 @@ export async function materialLoeschen(id: string): Promise<FormZustand> {
   if (!data?.length) return KEINE_BERECHTIGUNG;
 
   redirect("/materialien");
+}
+
+// Wareneingang ----------------------------------------------------------------
+// Beide Rollen dürfen buchen. Die Einheit dient nur der verständlichen Vorprüfung;
+// verbindlich prüft buche_eingang in der Datenbank anhand des gespeicherten Materials.
+
+export async function eingangBuchen(
+  materialId: string,
+  einheit: Einheit,
+  _vorher: FormZustand,
+  formData: FormData,
+): Promise<FormZustand> {
+  const werte = formularwerte(formData);
+  await getBenutzer();
+
+  const geprueft = eingangSchema(einheit).safeParse(werte);
+  if (!geprueft.success) {
+    return { fehler: "Bitte die markierten Felder prüfen.", feldfehler: feldfehler(geprueft.error), werte };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("buche_eingang", {
+    p_material_id: materialId,
+    p_menge: geprueft.data.menge,
+    p_kommentar: geprueft.data.kommentar ?? undefined,
+  });
+
+  if (error) {
+    // Eigene Meldungen aus buche_eingang (archiviert, ungültige Menge) direkt anzeigen.
+    if (error.code === "P0001" || error.code === "23514") return { fehler: error.message, werte };
+    if (error.code === "P0002") return { fehler: "Das Material wurde nicht gefunden.", werte };
+    return { fehler: dbFehlermeldung(error), werte };
+  }
+
+  // Seite mit neuem Bestand und neuer Bewegung neu rendern.
+  refresh();
+  return { erfolg: `Eingang über ${formatMenge(geprueft.data.menge, einheit)} gebucht.` };
 }
 
 // Kategorien ------------------------------------------------------------------
