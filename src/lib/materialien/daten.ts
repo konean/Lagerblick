@@ -8,7 +8,7 @@ export type MaterialFilter = {
 };
 
 // Zeichen, die in der PostgREST-Filtersyntax eine Bedeutung haben, aus der Suche entfernen.
-function suchbegriff(q: string) {
+export function suchbegriff(q: string) {
   return q.replace(/[,()*%\\"':]/g, " ").trim().slice(0, 100);
 }
 

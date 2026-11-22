@@ -10,6 +10,7 @@ import { EINHEITEN } from "@/lib/materialien/schema";
 import { AktionsKnopf } from "@/components/aktions-knopf";
 import { StornoKnopf } from "@/components/storno-knopf";
 import {
+  Angabe,
   BestandsHinweis,
   knopfGefahr,
   knopfPrimaer,
@@ -174,14 +175,5 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
         </section>
       )}
     </>
-  );
-}
-
-function Angabe({ label, wert, mono = false }: { label: string; wert?: string | null; mono?: boolean }) {
-  return (
-    <div className="border-t border-linie px-4 py-3 first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
-      <dt className="font-mono text-[11px] tracking-wider text-grau uppercase">{label}</dt>
-      <dd className={`mt-1 text-sm ${mono ? "font-mono tabular-nums" : ""}`}>{wert ?? "–"}</dd>
-    </div>
   );
 }

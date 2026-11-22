@@ -7,6 +7,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { buchungSchema, formularArtSchema, stornoSchema, type FormularArt } from "@/lib/bewegungen/schema";
 import { dbFehlermeldung } from "@/lib/db-fehler";
 import { formatMenge } from "@/lib/format";
+import { formularwerte } from "@/lib/formular";
 import { feldfehler, kategorieSchema, materialSchema, type Einheit } from "@/lib/materialien/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,14 +24,6 @@ const KEINE_BERECHTIGUNG: FormZustand = { fehler: "Nur Admins dürfen Stammdaten
 async function istAdmin() {
   const benutzer = await getBenutzer();
   return benutzer.rolle === "admin";
-}
-
-function formularwerte(formData: FormData) {
-  const werte: Record<string, string> = {};
-  formData.forEach((wert, schluessel) => {
-    if (typeof wert === "string" && !schluessel.startsWith("$")) werte[schluessel] = wert;
-  });
-  return werte;
 }
 
 // Materialien -----------------------------------------------------------------

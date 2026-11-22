@@ -65,14 +65,15 @@ export function Feldfehler({ text, id }: { text?: string; id: string }) {
   );
 }
 
-export function StatusLabel({ status }: { status: "aktiv" | "archiviert" }) {
+// Status von Materialien (aktiv/archiviert) und Projekten (aktiv/abgeschlossen).
+export function StatusLabel({ status }: { status: "aktiv" | "archiviert" | "abgeschlossen" }) {
   return status === "aktiv" ? (
     <span className="rounded-s bg-ok-hell px-1.5 py-0.5 font-mono text-[11px] tracking-wider text-ok uppercase">
       Aktiv
     </span>
   ) : (
     <span className="rounded-s bg-papier px-1.5 py-0.5 font-mono text-[11px] tracking-wider text-grau uppercase ring-1 ring-linie">
-      Archiviert
+      {status === "archiviert" ? "Archiviert" : "Abgeschlossen"}
     </span>
   );
 }
@@ -93,5 +94,15 @@ export function BestandsHinweis({ kurz = false }: { kurz?: boolean }) {
       className="rounded-s bg-warnung-hell px-1.5 py-0.5 font-mono text-[11px] tracking-wider whitespace-nowrap text-warnung uppercase">
       {kurz ? "Unter Min." : "Unter Mindestbestand"}
     </span>
+  );
+}
+
+// Beschriftete Angabe in einer zweispaltigen Stammdaten-Liste (<dl>).
+export function Angabe({ label, wert, mono = false }: { label: string; wert?: string | null; mono?: boolean }) {
+  return (
+    <div className="border-t border-linie px-4 py-3 first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
+      <dt className="font-mono text-[11px] tracking-wider text-grau uppercase">{label}</dt>
+      <dd className={`mt-1 text-sm ${mono ? "font-mono tabular-nums" : ""}`}>{wert ?? "–"}</dd>
+    </div>
   );
 }
