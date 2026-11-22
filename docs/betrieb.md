@@ -6,7 +6,7 @@ Lagerblick läuft auf Vercel und nutzt zwei getrennte Supabase-Projekte.
 | --- | --- | --- |
 | Lokal (`npm run dev`) | `.env.local` | `lagerblick-dev` |
 | Vercel Preview (jeder Branch außer `main`) | Vercel-Variablen „Preview“ | `lagerblick-dev` |
-| Vercel Production (`main`) | Vercel-Variablen „Production“ | `lagerblick-prod` |
+| Vercel Production (`main`), <https://lagerblick-iota.vercel.app> | Vercel-Variablen „Production“ | `lagerblick-prod` |
 
 Die Werte für `lagerblick-prod` stehen ausschließlich in den Production-Variablen von Vercel. Preview-Deployments kennen sie nicht und können deshalb nicht in die Produktionsdatenbank schreiben.
 
@@ -23,7 +23,7 @@ Den Secret- oder `service_role`-Key niemals in Vercel oder im Repo eintragen.
 
 1. Unter <https://supabase.com/dashboard> ein neues Projekt `lagerblick-prod` anlegen. Region wie beim Entwicklungsprojekt (EU). Das Datenbankpasswort im Passwortmanager ablegen.
 2. **Authentication → Sign In / Providers:** „Allow new users to sign up“ ausschalten. „Confirm email“ kann an bleiben, Benutzer werden ohnehin bestätigt angelegt.
-3. **Authentication → URL Configuration:** Site URL auf die Production-Adresse setzen, z. B. `https://lagerblick.vercel.app`. Die Anmeldung läuft per Passwort ohne E-Mail-Links, der Wert wird erst für künftige E-Mails (Passwort zurücksetzen) gebraucht.
+3. **Authentication → URL Configuration:** Site URL auf die Production-Adresse setzen, `https://lagerblick-iota.vercel.app`. Die Anmeldung läuft per Passwort ohne E-Mail-Links, der Wert wird erst für künftige E-Mails (Passwort zurücksetzen) gebraucht.
 4. **Project Settings → API Keys:** Project URL und Publishable Key notieren (für Vercel, Schritt 3).
 5. Migrationen einspielen, siehe [Migrationen auf Produktion](#migrationen-auf-produktion).
 6. Ersten Admin anlegen, siehe [Benutzer anlegen](#benutzer-anlegen).
@@ -40,6 +40,8 @@ Unter **Project → Settings → Environment Variables** beide Variablen je zwei
 
 - Umgebung **Production**: Werte von `lagerblick-prod`.
 - Umgebung **Preview**: Werte von `lagerblick-dev`.
+
+Die URL endet auf `.supabase.co` (nicht `.supabase.com`, das ist das Dashboard). Vercel warnt beim Speichern wegen des Präfixes `NEXT_PUBLIC_`. Beide Werte sind bewusst öffentlich, als Typ deshalb **Config** wählen und den Präfix behalten.
 
 Die Umgebung „Development“ bleibt leer, lokal gilt `.env.local`. Nach Änderungen an Variablen muss neu deployt werden (**Deployments → … → Redeploy**).
 
