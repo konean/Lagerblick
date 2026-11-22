@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
+import { BEREICHE, type BereichPfad } from "@/lib/navigation/bereiche";
 
 // Hauptbereiche der App. Die mobile Leiste ist für bis zu fünf Einträge ausgelegt.
-const EINTRAEGE = [
-  { href: "/", label: "Übersicht", kurz: "Übersicht", symbol: <SymbolUebersicht /> },
-  { href: "/materialien", label: "Materialien", kurz: "Material", symbol: <SymbolMaterial /> },
-  { href: "/bewegungen", label: "Bewegungen", kurz: "Bewegungen", symbol: <SymbolBewegungen /> },
-  { href: "/reservierungen", label: "Reservierungen", kurz: "Reserviert", symbol: <SymbolReservierungen /> },
-  { href: "/projekte", label: "Projekte", kurz: "Projekte", symbol: <SymbolProjekte /> },
-];
+const SYMBOLE: Record<BereichPfad, React.ReactNode> = {
+  "/": <SymbolUebersicht />,
+  "/materialien": <SymbolMaterial />,
+  "/bewegungen": <SymbolBewegungen />,
+  "/reservierungen": <SymbolReservierungen />,
+  "/projekte": <SymbolProjekte />,
+};
+
+const EINTRAEGE = BEREICHE.map((bereich) => ({ ...bereich, symbol: SYMBOLE[bereich.href] }));
 
 function istAktiv(href: string, pfad: string | null) {
   if (pfad === null) return false;
