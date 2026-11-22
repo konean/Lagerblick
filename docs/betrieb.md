@@ -59,10 +59,10 @@ npx supabase projects list
 npx supabase link --project-ref <prod-ref>
 
 # Zeigt nur an, welche Migrationen eingespielt würden
-npx supabase db push --dry-run
+npx supabase db push --remote --dry-run
 
 # Einspielen, wenn die Liste stimmt
-npx supabase db push
+npx supabase db push --remote
 
 # Zurück auf Entwicklung, damit db:types und weitere Pushes wieder dev treffen
 npx supabase link --project-ref <dev-ref>
