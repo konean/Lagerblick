@@ -27,7 +27,7 @@ export type KnappesMaterial<M> = {
 // bei Gleichstand nach Name.
 export function knappeMaterialien<M extends { id: string; name: string; mindestbestand: number }>(
   materialien: M[],
-  bestaende: Map<string, Bestand>,
+  bestaende: { get(materialId: string): Bestand | undefined },
 ): KnappesMaterial<M>[] {
   return materialien
     .map((material) => {
