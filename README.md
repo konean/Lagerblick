@@ -26,8 +26,11 @@ Halte hier Entscheidungen fest, die später erklärt werden müssen, etwa die Wa
 
 ## Kundenauslieferung
 
-- [ ] Der vereinbarte Ablauf funktioniert in der vorgesehenen Umgebung. Offene Punkte sind für die Abnahme dokumentiert.
+- [x] Der vereinbarte Ablauf funktioniert in der vorgesehenen Umgebung. Offene Punkte sind für die Abnahme dokumentiert.
+  - 2026-11-22 Abnahme auf <https://lagerblick-iota.vercel.app> (`lagerblick-prod`) nach `docs/betrieb.md`: Anmeldung beider Rollen, Wareneingang mit Bestand, Mitarbeiter ohne Korrektur und Storno, Storno und Archivieren, Registrierung abgewiesen, dev-Konto abgewiesen. Preview-Deployment läuft gegen `lagerblick-dev`.
+  - Offen: Bedienhilfe in der App. Free-Tarif ohne Backups und mit Pausieren bei Inaktivität (siehe `docs/betrieb.md`, „Laufender Betrieb“).
 - [ ] Zuständigkeiten für Betrieb, Updates und Support sind geklärt. Bei riskanten Änderungen an bestehenden Daten wurde die Wiederherstellung in einer Testumgebung geprüft.
-- [ ] Nach dem Deployment ist der ausgelieferte Stand festgehalten und der wichtigste Ablauf wurde geprüft.
+- [x] Nach dem Deployment ist der ausgelieferte Stand festgehalten und der wichtigste Ablauf wurde geprüft.
+  - Erste Auslieferung 2026-11-22: Stand `main` nach Merge von PR #9. Der ausgelieferte Commit steht in Vercel beim Deployment mit der Markierung „Current“.
 
 Anleitung für Einrichtung, Migrationen, Deployment und Abnahme: [`docs/betrieb.md`](docs/betrieb.md).
