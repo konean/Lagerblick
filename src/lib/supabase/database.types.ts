@@ -48,6 +48,7 @@ export type Database = {
           kommentar: string | null
           material_id: string
           menge: number
+          projekt_id: string | null
           storno_von: string | null
         }
         Insert: {
@@ -58,6 +59,7 @@ export type Database = {
           kommentar?: string | null
           material_id: string
           menge: number
+          projekt_id?: string | null
           storno_von?: string | null
         }
         Update: {
@@ -68,6 +70,7 @@ export type Database = {
           kommentar?: string | null
           material_id?: string
           menge?: number
+          projekt_id?: string | null
           storno_von?: string | null
         }
         Relationships: [
@@ -90,6 +93,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materialien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bewegungen_projekt_id_fkey"
+            columns: ["projekt_id"]
+            isOneToOne: false
+            referencedRelation: "projekte"
             referencedColumns: ["id"]
           },
           {
@@ -193,12 +203,103 @@ export type Database = {
         }
         Relationships: []
       }
+      projekte: {
+        Row: {
+          erstellt_am: string
+          geaendert_am: string
+          hinweis: string | null
+          id: string
+          name: string
+          nummer: string | null
+          status: Database["public"]["Enums"]["projekt_status"]
+        }
+        Insert: {
+          erstellt_am?: string
+          geaendert_am?: string
+          hinweis?: string | null
+          id?: string
+          name: string
+          nummer?: string | null
+          status?: Database["public"]["Enums"]["projekt_status"]
+        }
+        Update: {
+          erstellt_am?: string
+          geaendert_am?: string
+          hinweis?: string | null
+          id?: string
+          name?: string
+          nummer?: string | null
+          status?: Database["public"]["Enums"]["projekt_status"]
+        }
+        Relationships: []
+      }
+      reservierungen: {
+        Row: {
+          erstellt_am: string
+          geaendert_am: string
+          geaendert_von: string
+          id: string
+          material_id: string
+          menge: number
+          projekt_id: string
+        }
+        Insert: {
+          erstellt_am?: string
+          geaendert_am?: string
+          geaendert_von: string
+          id?: string
+          material_id: string
+          menge: number
+          projekt_id: string
+        }
+        Update: {
+          erstellt_am?: string
+          geaendert_am?: string
+          geaendert_von?: string
+          id?: string
+          material_id?: string
+          menge?: number
+          projekt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservierungen_geaendert_von_fkey"
+            columns: ["geaendert_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservierungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "material_bestand"
+            referencedColumns: ["material_id"]
+          },
+          {
+            foreignKeyName: "reservierungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materialien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservierungen_projekt_id_fkey"
+            columns: ["projekt_id"]
+            isOneToOne: false
+            referencedRelation: "projekte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       material_bestand: {
         Row: {
           bestand: number | null
+          frei: number | null
           material_id: string | null
+          reserviert: number | null
         }
         Relationships: []
       }
@@ -209,7 +310,12 @@ export type Database = {
         Returns: string
       }
       buche_entnahme: {
-        Args: { p_kommentar?: string; p_material_id: string; p_menge: number }
+        Args: {
+          p_kommentar?: string
+          p_material_id: string
+          p_menge: number
+          p_projekt_id?: string
+        }
         Returns: string
       }
       buche_korrektur: {
@@ -232,11 +338,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      setze_reservierung: {
+        Args: { p_material_id: string; p_menge: number; p_projekt_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       bewegungsart: "eingang" | "entnahme" | "korrektur" | "storno"
       einheit: "stueck" | "meter" | "rolle" | "packung" | "kg"
       material_status: "aktiv" | "archiviert"
+      projekt_status: "aktiv" | "abgeschlossen"
       rolle: "admin" | "mitarbeiter"
     }
     CompositeTypes: {
@@ -371,6 +482,7 @@ export const Constants = {
       bewegungsart: ["eingang", "entnahme", "korrektur", "storno"],
       einheit: ["stueck", "meter", "rolle", "packung", "kg"],
       material_status: ["aktiv", "archiviert"],
+      projekt_status: ["aktiv", "abgeschlossen"],
       rolle: ["admin", "mitarbeiter"],
     },
   },

@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { getBenutzer } from "@/lib/auth";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { buchungSchema, formularArtSchema, stornoSchema, type FormularArt } from "@/lib/bewegungen/schema";
-import { dbFehlermeldung } from "@/lib/db-fehler";
+import { dbFehlermeldung, funktionsfehler } from "@/lib/db-fehler";
 import { formatMenge } from "@/lib/format";
+import { formularwerte } from "@/lib/formular";
 import { feldfehler, kategorieSchema, materialSchema, type Einheit } from "@/lib/materialien/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,14 +24,6 @@ const KEINE_BERECHTIGUNG: FormZustand = { fehler: "Nur Admins dürfen Stammdaten
 async function istAdmin() {
   const benutzer = await getBenutzer();
   return benutzer.rolle === "admin";
-}
-
-function formularwerte(formData: FormData) {
-  const werte: Record<string, string> = {};
-  formData.forEach((wert, schluessel) => {
-    if (typeof wert === "string" && !schluessel.startsWith("$")) werte[schluessel] = wert;
-  });
-  return werte;
 }
 
 // Materialien -----------------------------------------------------------------
@@ -82,7 +75,8 @@ export async function materialStatusSetzen(
     .update({ status })
     .eq("id", id)
     .select("id");
-  if (error) return { fehler: dbFehlermeldung(error) };
+  // P0001: Offene Reservierungen sperren das Archivieren (Trigger in der Datenbank).
+  if (error) return { fehler: error.code === "P0001" ? error.message : dbFehlermeldung(error) };
   if (!data?.length) return KEINE_BERECHTIGUNG;
 
   redirect(`/materialien/${id}`);
@@ -109,12 +103,8 @@ export async function materialLoeschen(id: string): Promise<FormZustand> {
 // Die Einheit dient nur der verständlichen Vorprüfung; verbindlich prüfen die
 // Datenbankfunktionen anhand des gespeicherten Materials und der Rolle.
 
-// Eigene Meldungen der Buchungsfunktionen (Bestand reicht nicht, archiviert,
-// ungültige Menge, fehlende Berechtigung) sind verständlich und werden direkt angezeigt.
 function buchungsfehler(error: PostgrestError) {
-  if (["P0001", "23514", "42501"].includes(error.code)) return error.message;
-  if (error.code === "P0002") return "Das Material oder die Buchung wurde nicht gefunden.";
-  return dbFehlermeldung(error);
+  return funktionsfehler(error, "Das Material, das Projekt oder die Buchung wurde nicht gefunden.");
 }
 
 const ERFOLG: Record<FormularArt, (menge: string) => string> = {
@@ -142,6 +132,7 @@ export async function buchen(
     return { fehler: "Bitte die markierten Felder prüfen.", feldfehler: feldfehler(geprueft.error), werte };
   }
   const { menge, kommentar } = geprueft.data;
+  const projektId = "projekt_id" in geprueft.data ? geprueft.data.projekt_id : undefined;
 
   const supabase = await createClient();
   const { error } =
@@ -152,11 +143,18 @@ export async function buchen(
           // Bei der Korrektur ist der Grund laut Schema Pflicht; TypeScript sieht nur den gemeinsamen Typ.
           p_kommentar: kommentar ?? "",
         })
-      : await supabase.rpc(art.data === "eingang" ? "buche_eingang" : "buche_entnahme", {
-          p_material_id: materialId,
-          p_menge: menge,
-          p_kommentar: kommentar ?? undefined,
-        });
+      : art.data === "eingang"
+        ? await supabase.rpc("buche_eingang", {
+            p_material_id: materialId,
+            p_menge: menge,
+            p_kommentar: kommentar ?? undefined,
+          })
+        : await supabase.rpc("buche_entnahme", {
+            p_material_id: materialId,
+            p_menge: menge,
+            p_kommentar: kommentar ?? undefined,
+            p_projekt_id: projektId,
+          });
   if (error) return { fehler: buchungsfehler(error), werte };
 
   // Seite mit neuem Bestand und neuer Bewegung neu rendern.

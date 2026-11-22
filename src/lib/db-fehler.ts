@@ -17,3 +17,11 @@ export function dbFehlermeldung(fehler: PostgrestError): string {
       return "Speichern fehlgeschlagen. Bitte erneut versuchen.";
   }
 }
+
+// Eigene Meldungen der Buchungs- und Reservierungsfunktionen (Bestand reicht nicht,
+// archiviert, ungültige Menge, fehlende Berechtigung) sind verständlich und werden direkt angezeigt.
+export function funktionsfehler(fehler: PostgrestError, nichtGefunden: string): string {
+  if (["P0001", "23514", "42501"].includes(fehler.code)) return fehler.message;
+  if (fehler.code === "P0002") return nichtGefunden;
+  return dbFehlermeldung(fehler);
+}

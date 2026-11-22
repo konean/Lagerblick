@@ -18,7 +18,7 @@ export function istGanzzahligeEinheit(einheit: Einheit) {
   return einheit !== "meter" && einheit !== "kg";
 }
 
-function pflichttext(feld: string, max: number) {
+export function pflichttext(feld: string, max: number) {
   return z
     .string()
     .trim()
@@ -27,7 +27,7 @@ function pflichttext(feld: string, max: number) {
 }
 
 // Leere Eingabe wird zu null, damit optionale Felder in der Datenbank leer bleiben.
-function optionalerText(feld: string, max: number) {
+export function optionalerText(feld: string, max: number) {
   return z
     .string()
     .trim()

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { Bestand } from "@/lib/bewegungen/daten";
 import { BEWEGUNGSARTEN, type FormularArt } from "@/lib/bewegungen/schema";
 import { formatMenge } from "@/lib/format";
 import { EINHEITEN, istGanzzahligeEinheit, type Einheit } from "@/lib/materialien/schema";
@@ -20,19 +21,26 @@ const PLATZHALTER: Record<FormularArt, string> = {
   korrektur: "z. B. Inventur, Bruch, Schwund",
 };
 
+type Projekt = { id: string; name: string; nummer: string | null };
+
 export function BuchungsFormular({
   aktion,
   einheit,
   bestand,
   mitKorrektur,
+  projekte,
+  reserviertJeProjekt,
 }: {
   aktion: (vorher: FormZustand, formData: FormData) => Promise<FormZustand>;
   einheit: Einheit;
-  bestand: number;
+  bestand: Bestand;
   mitKorrektur: boolean;
+  projekte: Projekt[];
+  reserviertJeProjekt: Record<string, number>;
 }) {
   const [zustand, absenden, laeuft] = useActionState(aktion, {});
   const [art, setArt] = useState<FormularArt>("eingang");
+  const [projektId, setProjektId] = useState(zustand.werte?.projekt_id ?? "");
   const arten: FormularArt[] = mitKorrektur ? ["eingang", "entnahme", "korrektur"] : ["eingang", "entnahme"];
   const texte = TEXTE[art];
 
@@ -41,6 +49,11 @@ export function BuchungsFormular({
   const passend = !zustand.werte || zustand.werte.art === art;
   const fehler = passend ? (zustand.feldfehler ?? {}) : {};
   const werte = passend ? zustand.werte : undefined;
+
+  // Entnehmbar ist die freie Menge plus die Reservierung des gewählten Projekts,
+  // höchstens der physische Bestand (gleiche Regel wie buche_entnahme).
+  const eigene = reserviertJeProjekt[projektId] ?? 0;
+  const entnehmbar = Math.max(0, Math.min(bestand.bestand, bestand.frei + eigene));
 
   // React setzt das Formular nach dem Absenden zurück. Nach einem Fehler
   // stehen die eingegebenen Werte über defaultValue wieder drin.
@@ -89,10 +102,36 @@ export function BuchungsFormular({
         <Feldfehler id="menge-fehler" text={fehler.menge} />
         {art !== "eingang" && !fehler.menge && (
           <span id="menge-hinweis" className="mt-1 block font-mono text-xs font-normal text-grau tabular-nums">
-            {art === "entnahme" ? "Verfügbar" : "Aktuell gebucht"} {formatMenge(bestand, einheit)}
+            {art === "entnahme"
+              ? `Entnehmbar ${formatMenge(entnehmbar, einheit)}${eigene > 0 ? `, davon ${formatMenge(eigene, einheit)} für dieses Projekt reserviert` : ""}`
+              : `Aktuell gebucht ${formatMenge(bestand.bestand, einheit)}`}
           </span>
         )}
       </label>
+
+      {art === "entnahme" && (
+        <label htmlFor="projekt_id" className="block text-sm font-medium">
+          Projekt <span className="font-normal text-grau">(optional)</span>
+          <select
+            id="projekt_id"
+            name="projekt_id"
+            value={projektId}
+            onChange={(e) => setProjektId(e.target.value)}
+            aria-invalid={fehler.projekt_id ? true : undefined}
+            aria-describedby={fehler.projekt_id ? "projekt_id-fehler" : undefined}
+            className={eingabeKlasse}
+          >
+            <option value="">Ohne Projekt</option>
+            {projekte.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nummer ? `${p.nummer} · ${p.name}` : p.name}
+                {reserviertJeProjekt[p.id] ? ` (reserviert ${formatMenge(reserviertJeProjekt[p.id], einheit)})` : ""}
+              </option>
+            ))}
+          </select>
+          <Feldfehler id="projekt_id-fehler" text={fehler.projekt_id} />
+        </label>
+      )}
 
       <label htmlFor="kommentar" className="block text-sm font-medium">
         {texte.kommentar}

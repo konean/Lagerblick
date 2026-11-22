@@ -8,6 +8,7 @@ export const EINTRAEGE_PRO_SEITE = 50;
 
 export type HistorieFilter = {
   material?: string;
+  projekt?: string;
   art?: Bewegungsart;
   von?: string; // YYYY-MM-DD
   bis?: string; // YYYY-MM-DD
@@ -20,6 +21,7 @@ const datumSchema = z.iso.date();
 
 const parameterSchema = z.object({
   material: z.uuid().optional().catch(undefined),
+  projekt: z.uuid().optional().catch(undefined),
   art: z.enum(ART_SCHLUESSEL).optional().catch(undefined),
   von: datumSchema.optional().catch(undefined),
   bis: datumSchema.optional().catch(undefined),
@@ -36,6 +38,7 @@ function einzelwert(wert: string | string[] | undefined) {
 export function leseHistorieFilter(parameter: Parameter): { filter: HistorieFilter; fehler?: string } {
   const filter: HistorieFilter = parameterSchema.parse({
     material: einzelwert(parameter.material),
+    projekt: einzelwert(parameter.projekt),
     art: einzelwert(parameter.art),
     von: einzelwert(parameter.von),
     bis: einzelwert(parameter.bis),
@@ -84,6 +87,7 @@ export function zeitraumGrenzen(filter: Pick<HistorieFilter, "von" | "bis">) {
 export function historieUrl(filter: HistorieFilter, seite: number) {
   const parameter = new URLSearchParams();
   if (filter.material) parameter.set("material", filter.material);
+  if (filter.projekt) parameter.set("projekt", filter.projekt);
   if (filter.art) parameter.set("art", filter.art);
   if (filter.von) parameter.set("von", filter.von);
   if (filter.bis) parameter.set("bis", filter.bis);

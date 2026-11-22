@@ -7,6 +7,7 @@ import { historieUrl, leseHistorieFilter } from "@/lib/bewegungen/filter";
 import { BEWEGUNGSARTEN } from "@/lib/bewegungen/schema";
 import { formatMengeMitVorzeichen, formatZeitpunkt } from "@/lib/format";
 import { ladeMaterialien } from "@/lib/materialien/daten";
+import { ladeProjekte } from "@/lib/projekte/daten";
 import { StornoKnopf } from "@/components/storno-knopf";
 import { eingabeKlasse, knopfPrimaer, knopfSekundaer, Meldung, Seitenkopf, StorniertLabel } from "@/components/ui";
 import { stornieren } from "../materialien/actions";
@@ -26,18 +27,19 @@ export default function BewegungenSeite(props: PageProps<"/bewegungen">) {
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/bewegungen">["searchParams"] }) {
   const { filter, fehler } = leseHistorieFilter(await searchParams);
-  const [benutzer, materialien, { bewegungen, weitere }] = await Promise.all([
+  const [benutzer, materialien, projekte, { bewegungen, weitere }] = await Promise.all([
     getBenutzer(),
     ladeMaterialien({ status: "alle" }),
+    ladeProjekte({ status: "alle" }),
     ladeBewegungen(filter),
   ]);
   const istAdmin = benutzer.rolle === "admin";
-  const gefiltert = Boolean(filter.material || filter.art || filter.von || filter.bis);
+  const gefiltert = Boolean(filter.material || filter.projekt || filter.art || filter.von || filter.bis);
 
   return (
     <>
       {/* GET-Formular: Filter landen in der URL und lassen sich teilen. */}
-      <form className="grid grid-cols-2 gap-3 rounded-m border border-linie bg-flaeche p-4 lg:grid-cols-[1fr_160px_150px_150px_auto] lg:items-end">
+      <form className="grid grid-cols-2 gap-3 rounded-m border border-linie bg-flaeche p-4 lg:grid-cols-[1fr_1fr_150px_145px_145px_auto] lg:items-end">
         <label className="col-span-2 block text-sm font-medium lg:col-span-1">
           Artikel
           <select name="material" defaultValue={filter.material ?? ""} className={eingabeKlasse}>
@@ -46,6 +48,18 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/bewegungen">
               <option key={m.id} value={m.id}>
                 {m.name}
                 {m.status === "archiviert" ? " (archiviert)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="col-span-2 block text-sm font-medium lg:col-span-1">
+          Projekt
+          <select name="projekt" defaultValue={filter.projekt ?? ""} className={eingabeKlasse}>
+            <option value="">Alle Projekte</option>
+            {projekte.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nummer ? `${p.nummer} · ${p.name}` : p.name}
+                {p.status === "abgeschlossen" ? " (abgeschlossen)" : ""}
               </option>
             ))}
           </select>
@@ -110,6 +124,11 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/bewegungen">
                       </Link>
                     ) : (
                       "–"
+                    )}
+                    {b.projekt && (
+                      <Link href={`/projekte/${b.projekt.id}`} className="block text-xs text-grau hover:text-tinte hover:underline">
+                        Projekt {b.projekt.name}
+                      </Link>
                     )}
                     {/* Auf schmalen Bildschirmen stehen Art, Zeitpunkt und Benutzer unter dem Artikel. */}
                     <span className="block text-xs text-grau sm:hidden">{BEWEGUNGSARTEN[b.art]}</span>

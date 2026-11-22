@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
-import { ladeBestand, ladeLetzteBewegungen, unterMindestbestand } from "@/lib/bewegungen/daten";
+import { ladeBestand, ladeLetzteBewegungen, ueberreserviert, unterMindestbestand } from "@/lib/bewegungen/daten";
 import { BEWEGUNGSARTEN } from "@/lib/bewegungen/schema";
 import { formatMenge, formatMengeMitVorzeichen, formatZeitpunkt } from "@/lib/format";
 import { ladeMaterial } from "@/lib/materialien/daten";
 import { EINHEITEN } from "@/lib/materialien/schema";
+import { ladeProjekte } from "@/lib/projekte/daten";
+import { ladeReservierungen } from "@/lib/reservierungen/daten";
+import { ReservierungsTabelle } from "@/components/reservierungs-tabelle";
 import { AktionsKnopf } from "@/components/aktions-knopf";
 import { StornoKnopf } from "@/components/storno-knopf";
 import {
+  Angabe,
   BestandsHinweis,
   knopfGefahr,
   knopfPrimaer,
@@ -17,9 +21,12 @@ import {
   Seitenkopf,
   StatusLabel,
   StorniertLabel,
+  UeberreserviertLabel,
 } from "@/components/ui";
+import { reservierungSetzen } from "../../reservierungen/actions";
 import { buchen, materialLoeschen, materialStatusSetzen, stornieren } from "../actions";
 import { BuchungsFormular } from "./buchungs-formular";
+import { ReservierungsFormular } from "./reservierungs-formular";
 
 export const metadata: Metadata = { title: "Material · Lagerblick" };
 
@@ -38,14 +45,17 @@ export default function MaterialSeite(props: PageProps<"/materialien/[id]">) {
 
 async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["params"] }) {
   const { id } = await params;
-  const [material, benutzer, bestand, bewegungen] = await Promise.all([
+  const [material, benutzer, bestand, bewegungen, reservierungen, projekte] = await Promise.all([
     ladeMaterial(id),
     getBenutzer(),
     ladeBestand(id),
     ladeLetzteBewegungen(id),
+    ladeReservierungen({ material: id }),
+    ladeProjekte({ status: "aktiv" }),
   ]);
   const istAdmin = benutzer.rolle === "admin";
   const archiviert = material.status === "archiviert";
+  const reserviertJeProjekt = Object.fromEntries(reservierungen.map((r) => [r.projekt_id, r.menge]));
 
   return (
     <>
@@ -69,15 +79,30 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
         <div className="border-b border-linie p-5 sm:border-r sm:border-b-0">
           <p className="font-mono text-[11px] tracking-wider text-grau uppercase">Bestand</p>
           <p className="mt-2 font-mono text-3xl font-medium tabular-nums">
-            {formatMenge(bestand)}
+            {formatMenge(bestand.bestand)}
             <span className="ml-2 text-base font-normal text-grau">{EINHEITEN[material.einheit]}</span>
           </p>
-          <p className="mt-2 font-mono text-xs text-grau tabular-nums">
+          <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-linie pt-3 font-mono tabular-nums">
+            <div>
+              <dt className="text-[11px] tracking-wider text-grau uppercase">Reserviert</dt>
+              <dd className={`mt-0.5 text-sm ${bestand.reserviert > 0 ? "text-reserviert" : "text-grau"}`}>
+                {formatMenge(bestand.reserviert, material.einheit)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] tracking-wider text-grau uppercase">Frei</dt>
+              <dd className={`mt-0.5 text-sm ${ueberreserviert(bestand) ? "text-warnung" : ""}`}>
+                {formatMenge(bestand.frei, material.einheit)}
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-3 font-mono text-xs text-grau tabular-nums">
             Mindestbestand {formatMenge(material.mindestbestand, material.einheit)}
           </p>
-          {unterMindestbestand(bestand, material.mindestbestand) && (
-            <p className="mt-3">
-              <BestandsHinweis />
+          {(unterMindestbestand(bestand.bestand, material.mindestbestand) || ueberreserviert(bestand)) && (
+            <p className="mt-3 flex flex-wrap gap-2">
+              {unterMindestbestand(bestand.bestand, material.mindestbestand) && <BestandsHinweis />}
+              {ueberreserviert(bestand) && <UeberreserviertLabel />}
             </p>
           )}
         </div>
@@ -93,9 +118,27 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
               einheit={material.einheit}
               bestand={bestand}
               mitKorrektur={istAdmin}
+              projekte={projekte}
+              reserviertJeProjekt={reserviertJeProjekt}
             />
           )}
         </div>
+      </section>
+
+      <section className="rounded-m border border-linie bg-flaeche">
+        <h2 className="border-b border-linie px-4 py-3 text-sm font-semibold">Reservierungen</h2>
+        <ReservierungsTabelle reservierungen={reservierungen} spalten="projekt" />
+        {!archiviert && (
+          <div className="border-t border-linie p-4">
+            <ReservierungsFormular
+              aktion={reservierungSetzen.bind(null, material.id, material.einheit)}
+              einheit={material.einheit}
+              frei={bestand.frei}
+              projekte={projekte}
+              bisher={reserviertJeProjekt}
+            />
+          </div>
+        )}
       </section>
 
       <dl className="grid rounded-m border border-linie bg-flaeche sm:grid-cols-2">
@@ -132,6 +175,14 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
                 </span>
                 <span className="col-span-2 text-xs text-grau">
                   {formatZeitpunkt(b.erstellt_am)} · {b.ersteller?.anzeigename ?? "Unbekannt"}
+                  {b.projekt && (
+                    <>
+                      {" · Projekt "}
+                      <Link href={`/projekte/${b.projekt.id}`} className="hover:text-tinte hover:underline">
+                        {b.projekt.name}
+                      </Link>
+                    </>
+                  )}
                   {b.original && ` · zu ${BEWEGUNGSARTEN[b.original.art]} vom ${formatZeitpunkt(b.original.erstellt_am)}`}
                 </span>
                 {b.kommentar && (
@@ -156,7 +207,8 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
           <h2 className="text-sm font-semibold">Verwaltung</h2>
           <p className="text-sm text-grau">
             Archivierte Materialien bleiben mit ihrer Historie erhalten, erscheinen aber nicht mehr in
-            der Standardliste. Löschen ist nur möglich, solange es keine Buchungen gibt.
+            der Standardliste. Archivieren geht nur ohne offene Reservierungen, Löschen nur, solange
+            es keine Buchungen gibt.
           </p>
           <div className="flex flex-wrap gap-2">
             <AktionsKnopf
@@ -174,14 +226,5 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
         </section>
       )}
     </>
-  );
-}
-
-function Angabe({ label, wert, mono = false }: { label: string; wert?: string | null; mono?: boolean }) {
-  return (
-    <div className="border-t border-linie px-4 py-3 first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
-      <dt className="font-mono text-[11px] tracking-wider text-grau uppercase">{label}</dt>
-      <dd className={`mt-1 text-sm ${mono ? "font-mono tabular-nums" : ""}`}>{wert ?? "–"}</dd>
-    </div>
   );
 }
