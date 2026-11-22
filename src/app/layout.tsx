@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Lagerblick",
   description: "Materialbestände, Lagerbewegungen und Reservierungen",
 };
+
+// viewport-fit=cover: Inhalte dürfen bis an den Rand, die untere Leiste hält per safe-area Abstand.
+export const viewport: Viewport = { viewportFit: "cover", themeColor: "#ffffff" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

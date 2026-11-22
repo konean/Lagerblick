@@ -56,8 +56,8 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
   return (
     <>
       {/* GET-Formular: Filter landen in der URL und lassen sich teilen. */}
-      <form className="grid gap-3 rounded-m border border-linie bg-flaeche p-4 sm:grid-cols-[1fr_200px_160px_auto] sm:items-end">
-        <label className="block text-sm font-medium">
+      <form className="grid grid-cols-2 gap-3 rounded-m border border-linie bg-flaeche p-4 lg:grid-cols-[1fr_200px_160px_auto] lg:items-end">
+        <label className="col-span-2 block text-sm font-medium lg:col-span-1">
           Suche
           <input
             name="q"
@@ -86,7 +86,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
             <option value="alle">Alle</option>
           </select>
         </label>
-        <div className="flex gap-2">
+        <div className="col-span-2 flex gap-2 lg:col-span-1">
           <button type="submit" className={knopfPrimaer}>
             Filtern
           </button>
