@@ -1,6 +1,5 @@
 {
   // Empfehlungen für dieses Projekt. VS Code schlägt sie beim Öffnen des Ordners vor.
-  // Aktiviere den Block des verwendeten Tech-Stacks und lösche die übrigen.
   "recommendations": [
     // Basis für alle Projekte
     "usernamehw.errorlens",
@@ -12,20 +11,11 @@
     "DavidAnson.vscode-markdownlint",
 
     // TypeScript und React
-    // "dbaeumer.vscode-eslint",
-    // "esbenp.prettier-vscode",
-    // "yoavbls.pretty-ts-errors",
-    // "vitest.explorer",
-    // "bradlc.vscode-tailwindcss",
-
-    // PHP und WordPress-Plugin (in den Einstellungen "wordpress" zu intelephense.stubs hinzufügen)
-    // "bmewburn.vscode-intelephense-client",
-    // "johnbillion.vscode-wordpress-hooks",
-    // "xdebug.php-debug",
-
-    // Python
-    // "ms-python.python",
-    // "charliermarsh.ruff",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "yoavbls.pretty-ts-errors",
+    "vitest.explorer",
+    "bradlc.vscode-tailwindcss"
   ],
   // Überschneidet sich mit Claude und Codex
   "unwantedRecommendations": [
