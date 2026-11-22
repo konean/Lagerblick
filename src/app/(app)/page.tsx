@@ -36,7 +36,7 @@ export default function Uebersicht() {
         <Kennzahl label="Aktive Artikel" href="/materialien">
           <AnzahlAktiv />
         </Kennzahl>
-        <Kennzahl label="Unter Mindestbestand" href="#knapp">
+        <Kennzahl label="Unter Mindestbestand" href="/materialien?bestand=knapp">
           <AnzahlKnapp />
         </Kennzahl>
         <Kennzahl label="Offene Reservierungen" href="/reservierungen">
@@ -45,7 +45,7 @@ export default function Uebersicht() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Block id="knapp" titel="Unter Mindestbestand" href="/materialien">
+        <Block titel="Unter Mindestbestand" href="/materialien?bestand=knapp">
           <Suspense fallback={<Platzhalter zeilen={3} />}>
             <KnappeListe />
           </Suspense>
@@ -163,9 +163,9 @@ async function AnzahlReservierungen() {
 
 // --- Blöcke -------------------------------------------------------------------
 
-function Block({ id, titel, href, children }: { id?: string; titel: string; href: string; children: React.ReactNode }) {
+function Block({ titel, href, children }: { titel: string; href: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-6 overflow-hidden rounded-m border border-linie bg-flaeche">
+    <section className="overflow-hidden rounded-m border border-linie bg-flaeche">
       <div className="flex items-center justify-between gap-3 border-b border-linie px-4 py-3">
         <h2 className="text-sm font-semibold">{titel}</h2>
         <Link href={href} className="text-xs text-grau underline-offset-2 hover:text-tinte hover:underline">
@@ -232,7 +232,7 @@ async function KnappeListe() {
           </li>
         ))}
       </ul>
-      <Mehr anzahl={knappe.length - ANZAHL_KNAPP} href="/materialien" />
+      <Mehr anzahl={knappe.length - ANZAHL_KNAPP} href="/materialien?bestand=knapp" />
     </>
   );
 }

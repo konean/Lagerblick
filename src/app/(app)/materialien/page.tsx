@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
-import { ladeBestaende, ueberreserviert, unterMindestbestand } from "@/lib/bewegungen/daten";
+import { knappeMaterialien, ladeBestaende, ueberreserviert, unterMindestbestand } from "@/lib/bewegungen/daten";
 import { formatMenge } from "@/lib/format";
 import { ladeKategorien, ladeMaterialien, type MaterialFilter } from "@/lib/materialien/daten";
 import {
@@ -59,17 +59,21 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
     kategorie: einzelwert(parameter.kategorie) || undefined,
     status: statusWert === "archiviert" || statusWert === "alle" ? statusWert : "aktiv",
   };
+  // „Knapp“ heißt unter Mindestbestand oder überreserviert, wie auf der Übersicht.
+  const nurKnapp = einzelwert(parameter.bestand) === "knapp";
 
-  const [kategorien, materialien, bestaende] = await Promise.all([
+  const [kategorien, alleMaterialien, bestaende] = await Promise.all([
     ladeKategorien(),
     ladeMaterialien(filter),
     ladeBestaende(),
   ]);
+  const knappeIds = nurKnapp ? new Set(knappeMaterialien(alleMaterialien, bestaende).map((e) => e.material.id)) : null;
+  const materialien = knappeIds ? alleMaterialien.filter((m) => knappeIds.has(m.id)) : alleMaterialien;
 
   return (
     <>
       {/* GET-Formular: Filter landen in der URL und lassen sich teilen. */}
-      <form className="grid grid-cols-2 gap-3 rounded-m border border-linie bg-flaeche p-4 lg:grid-cols-[1fr_200px_160px_auto] lg:items-end">
+      <form className="grid grid-cols-2 gap-3 rounded-m border border-linie bg-flaeche p-4 lg:grid-cols-[1fr_200px_140px_140px_auto] lg:items-end">
         <label className="col-span-2 block text-sm font-medium lg:col-span-1">
           Suche
           <input
@@ -97,6 +101,13 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
             <option value="aktiv">Aktiv</option>
             <option value="archiviert">Archiviert</option>
             <option value="alle">Alle</option>
+          </select>
+        </label>
+        <label className="col-span-2 block text-sm font-medium sm:col-span-1">
+          Bestand
+          <select name="bestand" defaultValue={nurKnapp ? "knapp" : ""} className={eingabeKlasse}>
+            <option value="">Alle</option>
+            <option value="knapp">Knapp</option>
           </select>
         </label>
         <div className="col-span-2 flex gap-2 lg:col-span-1">
@@ -173,7 +184,9 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
           </tbody>
         </table>
         {materialien.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-grau">Keine Materialien gefunden.</p>
+          <p className="px-4 py-8 text-center text-sm text-grau">
+            {nurKnapp ? "Keine knappen Materialien für diese Filter." : "Keine Materialien gefunden."}
+          </p>
         )}
       </section>
       <p className="font-mono text-xs text-grau">{materialien.length} Einträge</p>
