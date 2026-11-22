@@ -1,11 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { LEERER_BESTAND, type Bestand } from "./bestand";
 import { EINTRAEGE_PRO_SEITE, zeitraumGrenzen, type HistorieFilter } from "./filter";
 
-// Physischer Bestand, reservierte und freie Menge eines Materials.
-// frei ist negativ, wenn ein Admin unter die reservierte Menge korrigiert hat.
-export type Bestand = { bestand: number; reserviert: number; frei: number };
-
-const LEER: Bestand = { bestand: 0, reserviert: 0, frei: 0 };
+export { knappeMaterialien, ueberreserviert, unterMindestbestand, type Bestand } from "./bestand";
 
 function alsBestand(z: { bestand: number | null; reserviert: number | null; frei: number | null }): Bestand {
   return { bestand: z.bestand ?? 0, reserviert: z.reserviert ?? 0, frei: z.frei ?? 0 };
@@ -28,7 +25,7 @@ export async function ladeBestand(materialId: string): Promise<Bestand> {
     .eq("material_id", materialId)
     .maybeSingle();
   if (error) throw error;
-  return data ? alsBestand(data) : LEER;
+  return data ? alsBestand(data) : LEERER_BESTAND;
 }
 
 export async function ladeLetzteBewegungen(materialId: string, anzahl = 10) {
@@ -38,6 +35,19 @@ export async function ladeLetzteBewegungen(materialId: string, anzahl = 10) {
     .select("id, art, menge, kommentar, erstellt_am, storno_von, ersteller:profiles(anzeigename), projekt:projekte(id, name)")
     .eq("material_id", materialId)
     .order("erstellt_am", { ascending: false })
+    .limit(anzahl);
+  if (error) throw error;
+  return mitStornoInfo(data);
+}
+
+// Neueste Bewegungen über alle Materialien, etwa für die Übersicht.
+export async function ladeNeuesteBewegungen(anzahl: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bewegungen")
+    .select("id, art, menge, kommentar, erstellt_am, storno_von, material:materialien(id, name, einheit, status), ersteller:profiles(anzeigename), projekt:projekte(id, name)")
+    .order("erstellt_am", { ascending: false })
+    .order("id")
     .limit(anzahl);
   if (error) throw error;
   return mitStornoInfo(data);
@@ -95,13 +105,4 @@ export async function mitStornoInfo<T extends { id: string; storno_von: string |
     storniert: storniert.has(b.id),
     original: b.storno_von ? (original.get(b.storno_von) ?? null) : null,
   }));
-}
-
-export function ueberreserviert(b: Bestand) {
-  return b.frei < 0;
-}
-
-// Markierung „unter Mindestbestand“ nur, wenn überhaupt ein Mindestbestand gesetzt ist.
-export function unterMindestbestand(bestand: number, mindestbestand: number) {
-  return mindestbestand > 0 && bestand < mindestbestand;
 }
