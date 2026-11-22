@@ -46,6 +46,9 @@ async function Inhalt({ params }: { params: PageProps<"/projekte/[id]">["params"
           </span>
         }
       >
+        <Link href={`/bewegungen?projekt=${projekt.id}`} className={knopfSekundaer}>
+          Buchungen
+        </Link>
         {istAdmin && (
           <Link href={`/projekte/${projekt.id}/bearbeiten`} className={knopfPrimaer}>
             Bearbeiten

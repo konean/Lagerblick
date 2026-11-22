@@ -35,7 +35,7 @@ export async function ladeLetzteBewegungen(materialId: string, anzahl = 10) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bewegungen")
-    .select("id, art, menge, kommentar, erstellt_am, storno_von, ersteller:profiles(anzeigename)")
+    .select("id, art, menge, kommentar, erstellt_am, storno_von, ersteller:profiles(anzeigename), projekt:projekte(id, name)")
     .eq("material_id", materialId)
     .order("erstellt_am", { ascending: false })
     .limit(anzahl);
@@ -51,12 +51,13 @@ export async function ladeBewegungen(filter: HistorieFilter) {
   let abfrage = supabase
     .from("bewegungen")
     // Als ein zusammenhängender Text, damit Supabase den Ergebnistyp ableiten kann.
-    .select("id, art, menge, kommentar, erstellt_am, storno_von, material:materialien(id, name, einheit, status), ersteller:profiles(anzeigename)")
+    .select("id, art, menge, kommentar, erstellt_am, storno_von, material:materialien(id, name, einheit, status), ersteller:profiles(anzeigename), projekt:projekte(id, name)")
     .order("erstellt_am", { ascending: false })
     .order("id")
     .range(start, start + EINTRAEGE_PRO_SEITE);
 
   if (filter.material) abfrage = abfrage.eq("material_id", filter.material);
+  if (filter.projekt) abfrage = abfrage.eq("projekt_id", filter.projekt);
   if (filter.art) abfrage = abfrage.eq("art", filter.art);
   const { ab, vor } = zeitraumGrenzen(filter);
   if (ab) abfrage = abfrage.gte("erstellt_am", ab);

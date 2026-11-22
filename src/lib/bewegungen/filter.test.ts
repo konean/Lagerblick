@@ -2,17 +2,20 @@ import { describe, expect, it } from "vitest";
 import { historieUrl, leseHistorieFilter, tagesbeginnBerlin, zeitraumGrenzen } from "./filter";
 
 const materialId = "3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f";
+const projektId = "6f1c2a1e-8b1a-4c1e-9a4e-2f1d3c4b5a69";
 
 describe("leseHistorieFilter", () => {
   it("übernimmt gültige Werte", () => {
     expect(
-      leseHistorieFilter({ material: materialId, art: "entnahme", von: "2026-11-01", bis: "2026-11-22", seite: "3" }),
-    ).toEqual({ filter: { material: materialId, art: "entnahme", von: "2026-11-01", bis: "2026-11-22", seite: 3 } });
+      leseHistorieFilter({ material: materialId, projekt: projektId, art: "entnahme", von: "2026-11-01", bis: "2026-11-22", seite: "3" }),
+    ).toEqual({
+      filter: { material: materialId, projekt: projektId, art: "entnahme", von: "2026-11-01", bis: "2026-11-22", seite: 3 },
+    });
   });
 
   it("ignoriert ungültige und leere Werte", () => {
     expect(
-      leseHistorieFilter({ material: "abc", art: "diebstahl", von: "2026-13-01", bis: "", seite: "-2" }),
+      leseHistorieFilter({ material: "abc", projekt: "xyz", art: "diebstahl", von: "2026-13-01", bis: "", seite: "-2" }),
     ).toEqual({ filter: { seite: 1 } });
     expect(leseHistorieFilter({ seite: ["2", "5"] }).filter.seite).toBe(2);
   });
@@ -47,5 +50,6 @@ describe("historieUrl", () => {
   it("behält die Filter beim Blättern bei", () => {
     expect(historieUrl({ art: "storno", von: "2026-11-01", seite: 1 }, 2)).toBe("/bewegungen?art=storno&von=2026-11-01&seite=2");
     expect(historieUrl({ seite: 2 }, 1)).toBe("/bewegungen");
+    expect(historieUrl({ projekt: projektId, seite: 1 }, 1)).toBe(`/bewegungen?projekt=${projektId}`);
   });
 });

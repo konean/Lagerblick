@@ -32,7 +32,7 @@ describe("buchungSchema für Eingang und Entnahme", () => {
     const projekt = "6f1c2a1e-8b1a-4c1e-9a4e-2f1d3c4b5a69";
     const schema = buchungSchema("entnahme", "stueck");
     expect(schema.parse({ menge: "1", kommentar: "", projekt_id: projekt })).toMatchObject({ projekt_id: projekt });
-    expect(schema.parse({ menge: "1", kommentar: "", projekt_id: "" }).projekt_id).toBeUndefined();
+    expect(schema.parse({ menge: "1", kommentar: "", projekt_id: "" })).toEqual({ menge: 1, kommentar: null });
     expect(schema.safeParse({ menge: "1", kommentar: "", projekt_id: "kein-projekt" }).success).toBe(false);
   });
 

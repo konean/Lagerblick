@@ -175,6 +175,14 @@ async function Inhalt({ params }: { params: PageProps<"/materialien/[id]">["para
                 </span>
                 <span className="col-span-2 text-xs text-grau">
                   {formatZeitpunkt(b.erstellt_am)} · {b.ersteller?.anzeigename ?? "Unbekannt"}
+                  {b.projekt && (
+                    <>
+                      {" · Projekt "}
+                      <Link href={`/projekte/${b.projekt.id}`} className="hover:text-tinte hover:underline">
+                        {b.projekt.name}
+                      </Link>
+                    </>
+                  )}
                   {b.original && ` · zu ${BEWEGUNGSARTEN[b.original.art]} vom ${formatZeitpunkt(b.original.erstellt_am)}`}
                 </span>
                 {b.kommentar && (
