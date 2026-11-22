@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
-// Hauptbereiche der App. Reservierungen folgt mit Phase 5.4;
-// die mobile Leiste ist für bis zu fünf Einträge ausgelegt.
+// Hauptbereiche der App. Die mobile Leiste ist für bis zu fünf Einträge ausgelegt.
 const EINTRAEGE = [
   { href: "/", label: "Übersicht", kurz: "Übersicht", symbol: <SymbolUebersicht /> },
   { href: "/materialien", label: "Materialien", kurz: "Material", symbol: <SymbolMaterial /> },
   { href: "/bewegungen", label: "Bewegungen", kurz: "Bewegungen", symbol: <SymbolBewegungen /> },
+  { href: "/reservierungen", label: "Reservierungen", kurz: "Reserviert", symbol: <SymbolReservierungen /> },
   { href: "/projekte", label: "Projekte", kurz: "Projekte", symbol: <SymbolProjekte /> },
 ];
 
@@ -144,6 +144,14 @@ function SymbolProjekte() {
   return (
     <Symbol>
       <path d="M2.5 5.5a1 1 0 0 1 1-1h4l1.5 2h7.5a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-10Z" />
+    </Symbol>
+  );
+}
+
+function SymbolReservierungen() {
+  return (
+    <Symbol>
+      <path d="M5.5 2.5h9a1 1 0 0 1 1 1v14l-5.5-3.5-5.5 3.5v-14a1 1 0 0 1 1-1Z" />
     </Symbol>
   );
 }

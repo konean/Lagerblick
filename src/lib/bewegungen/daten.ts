@@ -1,24 +1,34 @@
 import { createClient } from "@/lib/supabase/server";
 import { EINTRAEGE_PRO_SEITE, zeitraumGrenzen, type HistorieFilter } from "./filter";
 
-// Bestand aller Materialien als Zuordnung material_id → Bestand.
+// Physischer Bestand, reservierte und freie Menge eines Materials.
+// frei ist negativ, wenn ein Admin unter die reservierte Menge korrigiert hat.
+export type Bestand = { bestand: number; reserviert: number; frei: number };
+
+const LEER: Bestand = { bestand: 0, reserviert: 0, frei: 0 };
+
+function alsBestand(z: { bestand: number | null; reserviert: number | null; frei: number | null }): Bestand {
+  return { bestand: z.bestand ?? 0, reserviert: z.reserviert ?? 0, frei: z.frei ?? 0 };
+}
+
+// Bestände aller Materialien als Zuordnung material_id → Bestand.
 // Die View ist klein (eine Zeile pro Material) und wird für die Liste komplett geladen.
 export async function ladeBestaende() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("material_bestand").select("material_id, bestand");
+  const { data, error } = await supabase.from("material_bestand").select("material_id, bestand, reserviert, frei");
   if (error) throw error;
-  return new Map(data.map((z) => [z.material_id, z.bestand ?? 0]));
+  return new Map(data.map((z) => [z.material_id, alsBestand(z)]));
 }
 
-export async function ladeBestand(materialId: string) {
+export async function ladeBestand(materialId: string): Promise<Bestand> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("material_bestand")
-    .select("bestand")
+    .select("bestand, reserviert, frei")
     .eq("material_id", materialId)
     .maybeSingle();
   if (error) throw error;
-  return data?.bestand ?? 0;
+  return data ? alsBestand(data) : LEER;
 }
 
 export async function ladeLetzteBewegungen(materialId: string, anzahl = 10) {
@@ -84,6 +94,10 @@ export async function mitStornoInfo<T extends { id: string; storno_von: string |
     storniert: storniert.has(b.id),
     original: b.storno_von ? (original.get(b.storno_von) ?? null) : null,
   }));
+}
+
+export function ueberreserviert(b: Bestand) {
+  return b.frei < 0;
 }
 
 // Markierung „unter Mindestbestand“ nur, wenn überhaupt ein Mindestbestand gesetzt ist.

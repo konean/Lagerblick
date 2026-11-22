@@ -2,10 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
-import { ladeBestaende, unterMindestbestand } from "@/lib/bewegungen/daten";
+import { ladeBestaende, ueberreserviert, unterMindestbestand } from "@/lib/bewegungen/daten";
 import { formatMenge } from "@/lib/format";
 import { ladeKategorien, ladeMaterialien, type MaterialFilter } from "@/lib/materialien/daten";
-import { BestandsHinweis, eingabeKlasse, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
+import {
+  BestandsHinweis,
+  eingabeKlasse,
+  knopfPrimaer,
+  knopfSekundaer,
+  Seitenkopf,
+  StatusLabel,
+  UeberreserviertLabel,
+} from "@/components/ui";
 
 export const metadata: Metadata = { title: "Materialien · Lagerblick" };
 
@@ -109,14 +117,16 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
               <th className="hidden px-4 py-3 font-normal md:table-cell">Kategorie</th>
               <th className="hidden px-4 py-3 font-normal lg:table-cell">Artikelnr.</th>
               <th className="px-4 py-3 text-right font-normal">Bestand</th>
+              <th className="hidden px-4 py-3 text-right font-normal md:table-cell">Reserviert</th>
               <th className="hidden px-4 py-3 text-right font-normal sm:table-cell">Mindestbestand</th>
               <th className="hidden px-4 py-3 font-normal sm:table-cell">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-linie">
             {materialien.map((m) => {
-              const bestand = bestaende.get(m.id) ?? 0;
-              const knapp = unterMindestbestand(bestand, m.mindestbestand);
+              const stand = bestaende.get(m.id) ?? { bestand: 0, reserviert: 0, frei: 0 };
+              const knapp = unterMindestbestand(stand.bestand, m.mindestbestand);
+              const ueber = ueberreserviert(stand);
               return (
                 <tr key={m.id} className="hover:bg-papier">
                   <td className="px-4 py-3">
@@ -131,13 +141,25 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/materialien"
                   <td className="hidden px-4 py-3 font-mono text-xs lg:table-cell">{m.sku ?? "–"}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`font-mono tabular-nums ${knapp ? "font-medium text-warnung" : ""}`}>
-                      {formatMenge(bestand, m.einheit)}
+                      {formatMenge(stand.bestand, m.einheit)}
                     </span>
                     {knapp && (
                       <span className="mt-1 block">
                         <BestandsHinweis kurz />
                       </span>
                     )}
+                    {ueber && (
+                      <span className="mt-1 block">
+                        <UeberreserviertLabel />
+                      </span>
+                    )}
+                  </td>
+                  <td
+                    className={`hidden px-4 py-3 text-right font-mono tabular-nums md:table-cell ${
+                      stand.reserviert > 0 ? "text-reserviert" : "text-grau"
+                    }`}
+                  >
+                    {stand.reserviert > 0 ? formatMenge(stand.reserviert, m.einheit) : "–"}
                   </td>
                   <td className="hidden px-4 py-3 text-right font-mono text-grau tabular-nums sm:table-cell">
                     {formatMenge(m.mindestbestand, m.einheit)}

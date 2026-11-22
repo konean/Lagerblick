@@ -97,6 +97,18 @@ export function BestandsHinweis({ kurz = false }: { kurz?: boolean }) {
   );
 }
 
+// Mehr reserviert als vorhanden, etwa nach einer Inventurkorrektur durch einen Admin.
+export function UeberreserviertLabel() {
+  return (
+    <span
+      title="Mehr reserviert als im Lager vorhanden"
+      className="rounded-s bg-warnung-hell px-1.5 py-0.5 font-mono text-[11px] tracking-wider whitespace-nowrap text-warnung uppercase"
+    >
+      Überreserviert
+    </span>
+  );
+}
+
 // Beschriftete Angabe in einer zweispaltigen Stammdaten-Liste (<dl>).
 export function Angabe({ label, wert, mono = false }: { label: string; wert?: string | null; mono?: boolean }) {
   return (

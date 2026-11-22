@@ -4,7 +4,9 @@ import { Suspense } from "react";
 import { getBenutzer } from "@/lib/auth";
 import { formatZeitpunkt } from "@/lib/format";
 import { ladeProjekt } from "@/lib/projekte/daten";
+import { ladeReservierungen } from "@/lib/reservierungen/daten";
 import { AktionsKnopf } from "@/components/aktions-knopf";
+import { ReservierungsTabelle } from "@/components/reservierungs-tabelle";
 import { Angabe, knopfGefahr, knopfPrimaer, knopfSekundaer, Seitenkopf, StatusLabel } from "@/components/ui";
 import { projektLoeschen, projektStatusSetzen } from "../actions";
 
@@ -25,7 +27,11 @@ export default function ProjektSeite(props: PageProps<"/projekte/[id]">) {
 
 async function Inhalt({ params }: { params: PageProps<"/projekte/[id]">["params"] }) {
   const { id } = await params;
-  const [projekt, benutzer] = await Promise.all([ladeProjekt(id), getBenutzer()]);
+  const [projekt, benutzer, reservierungen] = await Promise.all([
+    ladeProjekt(id),
+    getBenutzer(),
+    ladeReservierungen({ projekt: id }),
+  ]);
   const istAdmin = benutzer.rolle === "admin";
   const abgeschlossen = projekt.status === "abgeschlossen";
 
@@ -56,12 +62,22 @@ async function Inhalt({ params }: { params: PageProps<"/projekte/[id]">["params"
         </div>
       </dl>
 
+      <section className="rounded-m border border-linie bg-flaeche">
+        <h2 className="border-b border-linie px-4 py-3 text-sm font-semibold">Reservierungen</h2>
+        <ReservierungsTabelle
+          reservierungen={reservierungen}
+          spalten="material"
+          leer={abgeschlossen ? "Abgeschlossene Projekte haben keine Reservierungen." : "Für dieses Projekt ist nichts reserviert. Reserviert wird auf der Seite des Materials."}
+        />
+      </section>
+
       {istAdmin && (
         <section className="space-y-3 rounded-m border border-linie bg-flaeche p-4">
           <h2 className="text-sm font-semibold">Verwaltung</h2>
           <p className="text-sm text-grau">
             Abgeschlossene Projekte bleiben mit ihren Buchungen erhalten, lassen sich aber nicht mehr
-            für Entnahmen auswählen. Löschen ist nur möglich, solange es keine Buchungen gibt.
+            für Entnahmen und Reservierungen auswählen. Abschließen geht nur ohne offene
+            Reservierungen, Löschen nur, solange es keine Buchungen gibt.
           </p>
           <div className="flex flex-wrap gap-2">
             <AktionsKnopf
