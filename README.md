@@ -1,32 +1,23 @@
-# {{PROJEKTNAME}}
+# Lagerblick
 
-{{WAS_DAS_PROJEKT_FÜR_WEN_LÖST}}
-
-## Diese Vorlage nutzen
-
-Kopiere den Inhalt der Vorlage samt `.gitignore`, `.github` und `.vscode` ins neue Projekt. Fülle die Platzhalter aus, sobald die Angaben feststehen. Aktiviere in `.vscode/extensions.json` den Block des Tech-Stacks und lösche die übrigen. Entferne danach diesen Abschnitt aus der Kopie.
-
-Für den Start mit KI genügt ein Auftrag wie dieser.
-
-> Lies AGENTS.md und README.md. Hilf mir, den ersten nutzbaren Ablauf zu planen. Sag mir, was du zuerst bauen und wie du es prüfen würdest. Zeig mir den nächsten Git-Schritt und erkläre kurz, wozu er dient.
-
-Sobald der Tech-Stack feststeht, lass die KI die `.gitignore` gezielt um lokale Abhängigkeiten, Build-Ausgaben und Caches des Projekts ergänzen. Prüfe mit `git status --short`, welche Dateien Git für den ersten Commit sieht. Du legst den Commit selbst an. Danach arbeitest du pro Aufgabe in einem Branch.
+Interne Webanwendung für Gerloff & Frerk. Lagerblick zeigt Materialbestände übersichtlich, dokumentiert Lagerbewegungen nachvollziehbar und ermöglicht Materialreservierungen für Projekte. Die genaue Projektbeschreibung steht in `HANDOFF.md`.
 
 ## Erster nutzbarer Ablauf
 
-- **Ablauf** — {{WAS_DIE_NUTZER_KÖNNEN_SOLLEN}}
-- **Fertig, wenn** — {{BEOBACHTBARES_ERGEBNIS}}
+- **Ablauf** — Benutzer meldet sich an, legt einen Artikel an, bucht einen Wareneingang und sieht den aktualisierten Bestand.
+- **Fertig, wenn** — Nach dem Wareneingang zeigt die Materialliste den erhöhten Bestand. Ein direkter Schreibzugriff auf die Buchungstabelle ohne die vorgesehene Datenbankfunktion wird verweigert.
 
 ## Starten und prüfen
 
-- **Einrichtung und Start** — {{VORAUSSETZUNGEN_KONFIGURATION_UND_STARTBEFEHL}}
-- **Lokale Prüfung** — {{PRÜFBEFEHL_ODER_MANUELLER_TEST}}
+- **Einrichtung und Start** — Node.js 24 oder neuer. `npm install`, dann `.env.example` nach `.env.local` kopieren und die Werte des Supabase-Entwicklungsprojekts eintragen. Start mit `npm run dev`, die App läuft unter <http://localhost:3000>. Datenbankmigrationen liegen in `supabase/migrations/` und werden mit der Supabase-CLI (`npx supabase`) eingespielt.
+- **Lokale Prüfung** — `npm run check` führt nacheinander Lint (`npm run lint`), Typprüfung (`npm run typecheck`), Tests (`npm run test`) und Produktions-Build (`npm run build`) aus. Alle Schritte müssen fehlerfrei durchlaufen.
 
 ## Entscheidungen
 
 Halte hier Entscheidungen fest, die später erklärt werden müssen, etwa die Wahl des Tech-Stacks oder eine bewusst verworfene Alternative. Eine Zeile pro Entscheidung genügt.
 
-- {{DATUM}} — {{ENTSCHEIDUNG}}. Grund: {{WARUM}}. Verworfen: {{ALTERNATIVE_UND_GRUND}}.
+- 2026-11-22 — Next.js (App Router, TypeScript, Tailwind) mit Supabase (PostgreSQL, Auth, RLS), Hosting auf Vercel. Grund: ein Projekt ohne separates Backend, Berechtigungen direkt in der Datenbank. Verworfen: eigenes API-Backend, weil es für den Umfang unnötige Komplexität bringt.
+- 2026-11-22 — `agentRules: false` in `next.config.ts`. Grund: `next dev` würde sonst einen eigenen Block in `AGENTS.md` schreiben. Verworfen: Block übernehmen, weil `AGENTS.md` die verbindlichen Projektregeln enthält.
 
 ## Kundenauslieferung
 

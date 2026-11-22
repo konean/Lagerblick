@@ -11,3 +11,19 @@ CLAUDE.local.md
 # Dateimanager
 Thumbs.db
 .DS_Store
+
+# Node.js und Next.js
+/node_modules
+/.next/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+
+# Vercel
+.vercel
+
+# Schlüsseldateien
+*.pem
