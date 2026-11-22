@@ -39,6 +39,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      kategorien: {
+        Row: {
+          erstellt_am: string
+          id: string
+          name: string
+        }
+        Insert: {
+          erstellt_am?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          erstellt_am?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      materialien: {
+        Row: {
+          beschreibung: string | null
+          einheit: Database["public"]["Enums"]["einheit"]
+          erstellt_am: string
+          geaendert_am: string
+          hersteller: string
+          id: string
+          kategorie_id: string
+          mindestbestand: number
+          modell: string
+          name: string
+          sku: string | null
+          status: Database["public"]["Enums"]["material_status"]
+        }
+        Insert: {
+          beschreibung?: string | null
+          einheit: Database["public"]["Enums"]["einheit"]
+          erstellt_am?: string
+          geaendert_am?: string
+          hersteller: string
+          id?: string
+          kategorie_id: string
+          mindestbestand?: number
+          modell: string
+          name: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["material_status"]
+        }
+        Update: {
+          beschreibung?: string | null
+          einheit?: Database["public"]["Enums"]["einheit"]
+          erstellt_am?: string
+          geaendert_am?: string
+          hersteller?: string
+          id?: string
+          kategorie_id?: string
+          mindestbestand?: number
+          modell?: string
+          name?: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["material_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materialien_kategorie_id_fkey"
+            columns: ["kategorie_id"]
+            isOneToOne: false
+            referencedRelation: "kategorien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           anzeigename: string
@@ -68,6 +139,8 @@ export type Database = {
       ist_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      einheit: "stueck" | "meter" | "rolle" | "packung" | "kg"
+      material_status: "aktiv" | "archiviert"
       rolle: "admin" | "mitarbeiter"
     }
     CompositeTypes: {
@@ -199,6 +272,8 @@ export const Constants = {
   },
   public: {
     Enums: {
+      einheit: ["stueck", "meter", "rolle", "packung", "kg"],
+      material_status: ["aktiv", "archiviert"],
       rolle: ["admin", "mitarbeiter"],
     },
   },

@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { io } from "next/cache";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
 import { supabaseEnv } from "./env";
@@ -8,6 +9,9 @@ import { supabaseEnv } from "./env";
 export async function createClient() {
   const { url, key } = supabaseEnv();
   const cookieStore = await cookies();
+  // Supabase liest die Uhrzeit (Date.now) für die Token-Prüfung. io() hält das
+  // Vorrendern hier an, damit das nur bei echten Anfragen passiert.
+  await io();
 
   return createServerClient<Database>(url, key, {
     cookies: {
