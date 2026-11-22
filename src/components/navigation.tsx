@@ -97,6 +97,33 @@ export function UntereNavigation() {
   );
 }
 
+// Zugang zur Bedienhilfe in der Kopfzeile, auf allen Geräten sichtbar.
+// Bewusst kein Hauptbereich: Die untere Leiste bleibt bei fünf Einträgen, die Wischgeste lässt die Hilfe aus.
+export function HilfeLink() {
+  return (
+    <MitPfad>
+      {(pfad) => {
+        const aktiv = pfad === "/hilfe";
+        return (
+          <Link
+            href="/hilfe"
+            aria-label="Hilfe"
+            aria-current={aktiv ? "page" : undefined}
+            className={`flex size-8 items-center justify-center rounded-s text-sm whitespace-nowrap md:size-auto md:px-2.5 md:py-1.5 ${
+              aktiv ? "bg-akzent-hell font-medium text-akzent" : "text-grau hover:bg-papier hover:text-tinte"
+            }`}
+          >
+            <span className="md:hidden">
+              <SymbolHilfe />
+            </span>
+            <span className="hidden md:inline">Hilfe</span>
+          </Link>
+        );
+      }}
+    </MitPfad>
+  );
+}
+
 // Schlichte Liniensymbole (20 px, 1,5 px Strich), passend zur ruhigen Gestaltung.
 function Symbol({ children }: { children: React.ReactNode }) {
   return (
@@ -147,6 +174,16 @@ function SymbolProjekte() {
   return (
     <Symbol>
       <path d="M2.5 5.5a1 1 0 0 1 1-1h4l1.5 2h7.5a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-10Z" />
+    </Symbol>
+  );
+}
+
+function SymbolHilfe() {
+  return (
+    <Symbol>
+      <circle cx="10" cy="10" r="7.5" />
+      <path d="M7.75 7.75a2.25 2.25 0 1 1 3.1 2.08c-.5.21-.85.68-.85 1.22v.45" strokeLinecap="round" />
+      <circle cx="10" cy="14" r="0.4" fill="currentColor" />
     </Symbol>
   );
 }

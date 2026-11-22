@@ -9,6 +9,11 @@ describe("zielBereich", () => {
     expect(zielBereich("/reservierungen", "vor")).toBe("/projekte");
   });
 
+  it("lässt Seiten außerhalb der Hauptbereiche aus, etwa die Hilfe", () => {
+    expect(zielBereich("/hilfe", "vor")).toBeNull();
+    expect(zielBereich("/hilfe", "zurueck")).toBeNull();
+  });
+
   it("ist endlos", () => {
     expect(zielBereich("/projekte", "vor")).toBe("/");
     expect(zielBereich("/", "zurueck")).toBe("/projekte");

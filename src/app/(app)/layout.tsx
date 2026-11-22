@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { Marke } from "@/components/marke";
-import { KopfNavigation, UntereNavigation } from "@/components/navigation";
+import { HilfeLink, KopfNavigation, UntereNavigation } from "@/components/navigation";
 import { WischNavigation } from "@/components/wisch-navigation";
 import { BenutzerMenue } from "./benutzer-menue";
 
@@ -16,7 +16,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Marke />
           </Link>
           <KopfNavigation />
-          <div className="ml-auto shrink-0">
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            <HilfeLink />
             <Suspense fallback={<span className="text-sm text-grau">…</span>}>
               <BenutzerMenue />
             </Suspense>
