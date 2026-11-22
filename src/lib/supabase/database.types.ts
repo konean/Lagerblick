@@ -233,12 +233,73 @@ export type Database = {
         }
         Relationships: []
       }
+      reservierungen: {
+        Row: {
+          erstellt_am: string
+          geaendert_am: string
+          geaendert_von: string
+          id: string
+          material_id: string
+          menge: number
+          projekt_id: string
+        }
+        Insert: {
+          erstellt_am?: string
+          geaendert_am?: string
+          geaendert_von: string
+          id?: string
+          material_id: string
+          menge: number
+          projekt_id: string
+        }
+        Update: {
+          erstellt_am?: string
+          geaendert_am?: string
+          geaendert_von?: string
+          id?: string
+          material_id?: string
+          menge?: number
+          projekt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservierungen_geaendert_von_fkey"
+            columns: ["geaendert_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservierungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "material_bestand"
+            referencedColumns: ["material_id"]
+          },
+          {
+            foreignKeyName: "reservierungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materialien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservierungen_projekt_id_fkey"
+            columns: ["projekt_id"]
+            isOneToOne: false
+            referencedRelation: "projekte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       material_bestand: {
         Row: {
           bestand: number | null
+          frei: number | null
           material_id: string | null
+          reserviert: number | null
         }
         Relationships: []
       }
@@ -275,6 +336,10 @@ export type Database = {
           p_einheit: Database["public"]["Enums"]["einheit"]
           p_menge: number
         }
+        Returns: undefined
+      }
+      setze_reservierung: {
+        Args: { p_material_id: string; p_menge: number; p_projekt_id: string }
         Returns: undefined
       }
     }

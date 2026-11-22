@@ -75,7 +75,8 @@ export async function materialStatusSetzen(
     .update({ status })
     .eq("id", id)
     .select("id");
-  if (error) return { fehler: dbFehlermeldung(error) };
+  // P0001: Offene Reservierungen sperren das Archivieren (Trigger in der Datenbank).
+  if (error) return { fehler: error.code === "P0001" ? error.message : dbFehlermeldung(error) };
   if (!data?.length) return KEINE_BERECHTIGUNG;
 
   redirect(`/materialien/${id}`);

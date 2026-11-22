@@ -54,7 +54,8 @@ export async function projektStatusSetzen(id: string, status: ProjektStatus): Pr
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("projekte").update({ status }).eq("id", id).select("id");
-  if (error) return { fehler: dbFehlermeldung(error) };
+  // P0001: Offene Reservierungen sperren das Abschließen (Trigger in der Datenbank).
+  if (error) return { fehler: error.code === "P0001" ? error.message : dbFehlermeldung(error) };
   if (!data?.length) return KEINE_BERECHTIGUNG;
 
   redirect(`/projekte/${id}`);
