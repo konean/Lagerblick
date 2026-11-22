@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { anmeldeFehlermeldung } from "@/lib/anmeldung";
 import { createClient } from "@/lib/supabase/server";
 
 export type AnmeldeZustand = { fehler?: string; email?: string };
@@ -20,13 +21,7 @@ export async function anmelden(
   const { error } = await supabase.auth.signInWithPassword({ email, password: passwort });
 
   if (error) {
-    const fehler =
-      error.code === "invalid_credentials"
-        ? "E-Mail oder Passwort ist falsch."
-        : error.code === "over_request_rate_limit"
-          ? "Zu viele Versuche. Bitte kurz warten und erneut versuchen."
-          : "Anmeldung fehlgeschlagen. Bitte später erneut versuchen.";
-    return { fehler, email };
+    return { fehler: anmeldeFehlermeldung(error), email };
   }
 
   redirect("/");
