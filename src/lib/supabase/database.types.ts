@@ -39,6 +39,58 @@ export type Database = {
   }
   public: {
     Tables: {
+      bewegungen: {
+        Row: {
+          art: Database["public"]["Enums"]["bewegungsart"]
+          erstellt_am: string
+          erstellt_von: string
+          id: string
+          kommentar: string | null
+          material_id: string
+          menge: number
+        }
+        Insert: {
+          art: Database["public"]["Enums"]["bewegungsart"]
+          erstellt_am?: string
+          erstellt_von: string
+          id?: string
+          kommentar?: string | null
+          material_id: string
+          menge: number
+        }
+        Update: {
+          art?: Database["public"]["Enums"]["bewegungsart"]
+          erstellt_am?: string
+          erstellt_von?: string
+          id?: string
+          kommentar?: string | null
+          material_id?: string
+          menge?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bewegungen_erstellt_von_fkey"
+            columns: ["erstellt_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bewegungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "material_bestand"
+            referencedColumns: ["material_id"]
+          },
+          {
+            foreignKeyName: "bewegungen_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materialien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kategorien: {
         Row: {
           erstellt_am: string
@@ -133,12 +185,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      material_bestand: {
+        Row: {
+          bestand: number | null
+          material_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      buche_eingang: {
+        Args: { p_kommentar?: string; p_material_id: string; p_menge: number }
+        Returns: string
+      }
       ist_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      bewegungsart: "eingang" | "entnahme" | "korrektur" | "storno"
       einheit: "stueck" | "meter" | "rolle" | "packung" | "kg"
       material_status: "aktiv" | "archiviert"
       rolle: "admin" | "mitarbeiter"
@@ -272,6 +335,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      bewegungsart: ["eingang", "entnahme", "korrektur", "storno"],
       einheit: ["stueck", "meter", "rolle", "packung", "kg"],
       material_status: ["aktiv", "archiviert"],
       rolle: ["admin", "mitarbeiter"],
