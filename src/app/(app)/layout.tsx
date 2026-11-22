@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Marke } from "@/components/marke";
 import { KopfNavigation, UntereNavigation } from "@/components/navigation";
+import { WischNavigation } from "@/components/wisch-navigation";
 import { BenutzerMenue } from "./benutzer-menue";
 
 // Rahmen für alle Seiten nach der Anmeldung.
-// Desktop: Navigation in der Kopfzeile. Smartphone: feste Leiste unten.
+// Desktop: Navigation in der Kopfzeile. Smartphone: feste Leiste unten und Wischen zwischen den Bereichen.
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -24,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
       {/* Unten Platz für die mobile Navigationsleiste lassen. */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 md:py-8">
-        {children}
+        <WischNavigation>{children}</WischNavigation>
       </main>
       <UntereNavigation />
     </>
